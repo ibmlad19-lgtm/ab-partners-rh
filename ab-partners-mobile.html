@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="theme-color" content="#060810"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="AB Partners"/>
+<title>AB PARTNERS RH</title>
+<link rel="manifest" href="#" id="manifest-link"/>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#060810;--s1:#0D0F1C;--s2:#141628;--s3:#1C1F35;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#ECEDF5;--muted:#6E7191;--soft:#9B9EBA;
+  --accent:#3D7FFF;--accent2:#6A4FFF;
+  --green:#00C37A;--orange:#F5A623;--red:#FF4560;--teal:#00BCD4;--purple:#9B59B6;
+  --safe-top:env(safe-area-inset-top);
+  --safe-bot:env(safe-area-inset-bottom);
+  --nav-h:64px;
+  --header-h:56px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Outfit,sans-serif;}
+::-webkit-scrollbar{display:none;}
+
+/* ── LOGIN ───────────────────────────────────────────────────────── */
+#login-screen{
+  position:fixed;inset:0;z-index:999;
+  background:linear-gradient(160deg,#060810 0%,#0D0F1C 60%,#141628 100%);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.login-box{width:100%;max-width:380px;}
+.login-logo{text-align:center;margin-bottom:40px;}
+.login-mark{
+  width:64px;height:64px;border-radius:20px;margin:0 auto 16px;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  box-shadow:0 20px 40px rgba(61,127,255,0.3);
+}
+.login-logo h1{font-family:Fraunces,serif;font-size:24px;font-weight:700;letter-spacing:-.02em;}
+.login-logo p{font-size:13px;color:var(--muted);margin-top:6px;}
+.l-field{margin-bottom:16px;}
+.l-field label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;}
+.l-inp{
+  width:100%;background:var(--s1);border:1.5px solid var(--border2);
+  border-radius:14px;padding:14px 18px;color:var(--text);
+  font-size:16px;font-family:Outfit,sans-serif;outline:none;transition:border-color .2s;
+}
+.l-inp:focus{border-color:var(--accent);}
+.l-btn{
+  width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));
+  border:none;color:#fff;padding:16px;border-radius:14px;
+  font-family:Outfit,sans-serif;font-size:16px;font-weight:700;cursor:pointer;
+  margin-top:8px;box-shadow:0 10px 30px rgba(61,127,255,0.35);
+  transition:transform .15s,box-shadow .15s;
+}
+.l-btn:active{transform:scale(.97);box-shadow:0 5px 15px rgba(61,127,255,0.2);}
+.l-err{color:var(--red);font-size:13px;text-align:center;margin-top:10px;display:none;}
+.l-reset{display:block;text-align:center;margin-top:20px;color:var(--muted);font-size:12px;background:none;border:none;cursor:pointer;font-family:Outfit,sans-serif;text-decoration:underline;}
+
+/* ── APP SHELL ───────────────────────────────────────────────────── */
+#app{display:none;height:100%;flex-direction:column;}
+#app.visible{display:flex;}
+
+/* ── TOP HEADER ──────────────────────────────────────────────────── */
+.top-header{
+  height:var(--header-h);padding-top:var(--safe-top);
+  background:rgba(6,8,16,0.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding-left:20px;padding-right:20px;
+  position:sticky;top:0;z-index:50;flex-shrink:0;
+}
+.top-header h1{font-family:Fraunces,serif;font-size:18px;font-weight:700;}
+.top-header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--s2);display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;transition:background .15s;
+}
+.icon-btn:active{background:var(--s3);}
+
+/* ── PAGES ───────────────────────────────────────────────────────── */
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{
+  position:absolute;inset:0;overflow-y:auto;
+  padding:16px 16px calc(var(--nav-h) + var(--safe-bot) + 16px);
+  display:none;
+}
+.page.active{display:block;animation:fadeIn .2s ease;}
+
+/* ── BOTTOM NAV ──────────────────────────────────────────────────── */
+.bottom-nav{
+  height:calc(var(--nav-h) + var(--safe-bot));
+  padding-bottom:var(--safe-bot);
+  background:rgba(13,15,28,0.97);backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:stretch;flex-shrink:0;z-index:50;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;cursor:pointer;transition:color .2s;color:var(--muted);
+  border:none;background:none;font-family:Outfit,sans-serif;
+  position:relative;padding-top:8px;
+}
+.nav-item.active{color:var(--accent);}
+.nav-item .nav-ico{font-size:22px;transition:transform .2s;}
+.nav-item.active .nav-ico{transform:translateY(-2px);}
+.nav-item span{font-size:10px;font-weight:600;letter-spacing:.04em;}
+.nav-badge{
+  position:absolute;top:6px;right:calc(50% - 18px);
+  background:var(--red);color:#fff;font-size:9px;font-weight:700;
+  padding:1px 5px;border-radius:10px;font-family:JetBrains Mono,monospace;
+  min-width:16px;text-align:center;
+}
+
+/* ── CARDS & STATS ───────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.stat-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:16px;transition:transform .15s;
+}
+.stat-card:active{transform:scale(.97);}
+.stat-card .ico{font-size:22px;margin-bottom:8px;}
+.stat-card .val{font-family:Fraunces,serif;font-size:28px;font-weight:700;line-height:1;}
+.stat-card .lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ── LIST ITEMS ─────────────────────────────────────────────────── */
+.emp-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:14px 16px;margin-bottom:10px;cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;gap:12px;
+}
+.emp-card:active{background:var(--s2);transform:scale(.98);}
+.emp-card.warn{border-left:3px solid var(--orange);}
+.emp-card.urgent{border-left:3px solid var(--red);}
+.emp-avatar{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:Fraunces,serif;font-size:15px;font-weight:700;
+}
+.emp-info{flex:1;min-width:0;}
+.emp-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.emp-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.emp-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+
+/* ── BADGES ─────────────────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;font-family:JetBrains Mono,monospace;white-space:nowrap;}
+.b-actif{background:rgba(0,195,122,0.15);color:var(--green);}
+.b-expire{background:rgba(110,113,145,0.15);color:var(--muted);}
+.b-resilie{background:rgba(255,69,96,0.15);color:var(--red);}
+.type-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;font-family:JetBrains Mono,monospace;}
+.type-CDI{background:rgba(0,195,122,0.15);color:var(--green);}
+.type-CDD{background:rgba(61,127,255,0.15);color:var(--accent);}
+.type-ESSAI{background:rgba(245,166,35,0.15);color:var(--orange);}
+.type-STAGE{background:rgba(0,188,212,0.15);color:var(--teal);}
+.type-EXPATRIE{background:rgba(155,89,182,0.15);color:var(--purple);}
+
+/* ── ALERT CARDS ─────────────────────────────────────────────────── */
+.alert-card{
+  background:var(--s1);border-left:4px solid var(--border);
+  border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;
+  transition:all .15s;
+}
+.alert-card:active{transform:scale(.98);}
+.alert-card.danger{border-left-color:var(--red);background:rgba(255,69,96,0.06);}
+.alert-card.warn{border-left-color:var(--orange);background:rgba(245,166,35,0.06);}
+.alert-card .a-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.alert-card .a-ico{font-size:20px;}
+.alert-card .a-title{font-size:14px;font-weight:600;flex:1;}
+.alert-card .a-days{font-size:12px;font-family:JetBrains Mono,monospace;color:var(--red);font-weight:700;}
+.alert-card .a-detail{font-size:12px;color:var(--muted);}
+.a-actions{display:flex;gap:8px;margin-top:10px;}
+.a-btn{flex:1;padding:10px 8px;border-radius:10px;border:none;font-size:12px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;text-align:center;}
+.a-btn.renouv{background:rgba(0,195,122,0.15);color:var(--green);}
+.a-btn.stop{background:rgba(255,69,96,0.1);color:var(--red);}
+
+/* ── SECTION TITLES ──────────────────────────────────────────────── */
+.section-title{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:12px;margin-top:20px;display:flex;align-items:center;gap:8px;
+}
+.section-title:first-child{margin-top:0;}
+
+/* ── SEARCH BAR ──────────────────────────────────────────────────── */
+.search-bar{
+  position:relative;margin-bottom:16px;
+}
+.search-bar input{
+  width:100%;background:var(--s1);border:1.5px solid var(--border2);
+  border-radius:14px;padding:12px 16px 12px 42px;
+  color:var(--text);font-size:15px;font-family:Outfit,sans-serif;outline:none;
+}
+.search-bar input:focus{border-color:var(--accent);}
+.search-bar .s-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none;}
+
+/* ── BOTTOM SHEET (drawer) ────────────────────────────────────────── */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0);z-index:100;
+  pointer-events:none;transition:background .3s;
+}
+.sheet-overlay.open{background:rgba(0,0,0,0.7);pointer-events:all;}
+.sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:101;
+  background:var(--s1);border-radius:24px 24px 0 0;
+  max-height:90vh;overflow-y:auto;
+  padding:0 20px calc(var(--safe-bot) + 20px);
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);
+}
+.sheet.open{transform:translateY(0);}
+.sheet-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:14px auto 20px;}
+.sheet-title{font-family:Fraunces,serif;font-size:20px;font-weight:700;margin-bottom:20px;}
+
+/* ── FORM ELEMENTS ───────────────────────────────────────────────── */
+.form-field{margin-bottom:16px;}
+.form-field label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;}
+.form-field input,.form-field select,.form-field textarea{
+  width:100%;background:var(--s2);border:1.5px solid var(--border2);
+  border-radius:12px;padding:13px 16px;color:var(--text);
+  font-size:15px;font-family:Outfit,sans-serif;outline:none;transition:border-color .2s;
+}
+.form-field input:focus,.form-field select:focus{border-color:var(--accent);}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ── DEPOT IT CARDS ──────────────────────────────────────────────── */
+.depot-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;
+}
+.depot-card:active{transform:scale(.98);}
+.depot-card.not-deposited{border-left:4px solid var(--muted);}
+.depot-card.pending{border-left:4px solid var(--orange);}
+.depot-card.ok{border-left:4px solid var(--green);}
+.depot-card.refused{border-left:4px solid var(--red);}
+.depot-head{display:flex;align-items:center;gap:10px;}
+.depot-info{flex:1;min-width:0;}
+.depot-status{font-size:11px;font-weight:700;font-family:JetBrains Mono,monospace;}
+.depot-status.s-none{color:var(--muted);}
+.depot-status.s-pending{color:var(--orange);}
+.depot-status.s-ok{color:var(--green);}
+.depot-status.s-refused{color:var(--red);}
+
+/* ── FILTER CHIPS ────────────────────────────────────────────────── */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+  flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border2);
+  background:none;color:var(--soft);font-size:12px;font-weight:600;
+  font-family:Outfit,sans-serif;cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.chip.active{background:rgba(61,127,255,0.15);border-color:var(--accent);color:var(--accent);}
+
+/* ── FAB ─────────────────────────────────────────────────────────── */
+.fab{
+  position:fixed;bottom:calc(var(--nav-h) + var(--safe-bot) + 16px);right:20px;
+  width:56px;height:56px;border-radius:18px;border:none;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  color:#fff;font-size:24px;cursor:pointer;z-index:40;
+  box-shadow:0 8px 24px rgba(61,127,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,box-shadow .15s;
+}
+.fab:active{transform:scale(.92);box-shadow:0 4px 12px rgba(61,127,255,0.3);}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────────── */
+.empty{text-align:center;padding:48px 24px;color:var(--muted);}
+.empty .e-ico{font-size:48px;margin-bottom:12px;}
+.empty p{font-size:14px;}
+
+/* ── TOAST ────────────────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:calc(var(--nav-h) + var(--safe-bot) + 16px);
+  left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--s3);color:var(--text);
+  padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;
+  z-index:200;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── CONTRACT FORM SHEET ─────────────────────────────────────────── */
+.optgroup-label{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);padding:10px 0 4px;
+}
+
+/* ── USER CHIP ────────────────────────────────────────────────────── */
+.user-pill{
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:10px;padding:6px 12px;font-size:12px;font-weight:600;
+  display:flex;align-items:center;gap:6px;
+}
+.user-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+/* ── D-ITEM (detail row) ─────────────────────────────────────────── */
+.d-row{padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.d-row:last-child{border-bottom:none;}
+.d-row .d-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;flex-shrink:0;}
+.d-row .d-val{font-size:13px;text-align:right;}
+
+.more-btn{
+  background:var(--s2);border:1.5px solid var(--border2);border-radius:16px;
+  padding:16px 8px;color:var(--text);font-size:24px;cursor:pointer;
+  font-family:Outfit,sans-serif;transition:all .15s;text-align:center;
+}
+.more-btn:active{transform:scale(.95);background:var(--s3);}
+.more-btn span{display:block;font-size:12px;font-weight:600;color:var(--soft);margin-top:6px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ──────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-mark">🤝</div>
+      <h1>AB PARTNERS</h1>
+      <p>Suivi des contrats RH</p>
+    </div>
+    <div class="l-field">
+      <label>Identifiant</label>
+      <input class="l-inp" id="l-user" type="text" placeholder="Identifiant" autocapitalize="none" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()"/>
+    </div>
+    <div class="l-field">
+      <label>Mot de passe</label>
+      <input class="l-inp" id="l-pass" type="password" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="l-err" id="l-err">Identifiant ou mot de passe incorrect</div>
+    <button class="l-btn" onclick="doLogin()">Se connecter</button>
+    <button class="l-reset" onclick="resetApp()">Problème de connexion ? Réinitialiser</button>
+  </div>
+</div>
+
+<!-- ── APP ────────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="top-header">
+    <h1 id="page-title">Tableau de bord</h1>
+    <div class="top-header-right">
+      <div id="sync-dot" title="Synchronisation" style="width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0;"></div>
+      <div class="user-pill" id="user-pill">
+        <div class="user-dot"></div>
+        <span id="user-name">—</span>
+      </div>
+      <div class="icon-btn" onclick="doLogout()">⏻</div>
+    </div>
+  </div>
+
+  <!-- Pages -->
+  <div class="pages">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="dash-stats"></div>
+      <div class="section-title">🔔 Alertes actives</div>
+      <div id="dash-alerts-list"></div>
+    </div>
+
+    <!-- ALERTES -->
+    <div class="page" id="page-alertes">
+      <div class="chips" id="alert-chips">
+        <button class="chip active" onclick="filterAlerts('all',this)">Toutes</button>
+        <button class="chip" onclick="filterAlerts('urgent',this)">🔴 Urgentes</button>
+        <button class="chip" onclick="filterAlerts('attention',this)">🟠 Attention</button>
+        <button class="chip" onclick="filterAlerts('expire',this)">⏰ Expirés</button>
+      </div>
+      <div id="alertes-list"></div>
+    </div>
+
+    <!-- EMPLOYÉS -->
+    <div class="page" id="page-employes">
+      <div class="search-bar">
+        <span class="s-ico">🔍</span>
+        <input type="search" placeholder="Rechercher un salarié…" oninput="renderEmployesMobile(this.value)"/>
+      </div>
+      <div class="chips" id="emp-chips">
+        <button class="chip active" onclick="filterEmps('',this)">Tous</button>
+        <button class="chip" onclick="filterEmps('Actif',this)">✅ Actifs</button>
+        <button class="chip" onclick="filterEmps('Expiré',this)">⏰ Expirés</button>
+      </div>
+      <div id="emp-list"></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="search-bar">
+        <span class="s-ico">🔍</span>
+        <input type="search" placeholder="Rechercher un client…" oninput="renderClientsMobile(this.value)"/>
+      </div>
+      <div id="clients-list"></div>
+    </div>
+
+    <!-- DÉPÔTS IT -->
+    <div class="page" id="page-depotit">
+      <div class="chips" id="depot-chips">
+        <button class="chip active" onclick="filterDepot('',this)">Tous</button>
+        <button class="chip" onclick="filterDepot('none',this)">⬜ Non déposés</button>
+        <button class="chip" onclick="filterDepot('pending',this)">⏳ En attente</button>
+        <button class="chip" onclick="filterDepot('ok',this)">✅ Visés</button>
+      </div>
+      <div id="depot-list"></div>
+    </div>
+
+  
+    <!-- HISTORIQUE -->
+    <div class="page" id="page-historique">
+      <div class="search-bar">
+        <span class="s-ico">🔍</span>
+        <input type="search" placeholder="Rechercher un salarié…" oninput="renderHistoriqueMobile(this.value)"/>
+      </div>
+      <div id="hist-list"></div>
+    </div>
+
+    <!-- SIGNATURES -->
+    <div class="page" id="page-signatures">
+      <div class="chips" id="sig-chips">
+        <button class="chip active" onclick="filterSig('',this)">Toutes</button>
+        <button class="chip" onclick="filterSig('unsent',this)">⬜ Non envoyé</button>
+        <button class="chip" onclick="filterSig('sent',this)">📤 En attente</button>
+        <button class="chip" onclick="filterSig('refused',this)">❌ Refusé</button>
+      </div>
+      <div id="sig-list"></div>
+    </div>
+
+    <!-- DÉPARTS -->
+    <div class="page" id="page-departs">
+      <div class="search-bar">
+        <span class="s-ico">🔍</span>
+        <input type="search" placeholder="Rechercher…" oninput="renderDepartsMobile(this.value)"/>
+      </div>
+      <div id="dep-list"></div>
+    </div>
+
+    <!-- AVENANTS -->
+    <div class="page" id="page-avenants">
+      <div class="search-bar">
+        <span class="s-ico">🔍</span>
+        <input type="search" placeholder="Rechercher…" oninput="renderAvenantsMobile(this.value)"/>
+      </div>
+      <div id="av-list"></div>
+    </div>
+
+    <!-- DAMT -->
+    <div class="page" id="page-damt">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <button onclick="damtMobileYear(-1)" style="background:var(--s2);border:1px solid var(--border2);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;">‹</button>
+        <span id="damt-year-m" style="font-family:Fraunces,serif;font-size:24px;font-weight:700;"></span>
+        <button onclick="damtMobileYear(+1)" style="background:var(--s2);border:1px solid var(--border2);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;">›</button>
+      </div>
+      <div id="damt-stats-m" class="stats-grid"></div>
+      <div class="section-title" style="margin-top:4px">Mouvements</div>
+      <div id="damt-list-m"></div>
+    </div>
+
+    <!-- ÉTAT 1024 -->
+    <div class="page" id="page-etat1024">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <button onclick="e1024MobileYear(-1)" style="background:var(--s2);border:1px solid var(--border2);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;">‹</button>
+        <span id="e1024-year-m" style="font-family:Fraunces,serif;font-size:24px;font-weight:700;"></span>
+        <button onclick="e1024MobileYear(+1)" style="background:var(--s2);border:1px solid var(--border2);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;">›</button>
+      </div>
+      <div id="e1024-stats-m" class="stats-grid" style="grid-template-columns:1fr 1fr;"></div>
+      <div class="section-title" style="margin-top:4px">✅ Présents en fin d'année</div>
+      <div id="e1024-actifs-m"></div>
+      <div class="section-title">🚪 Sortis en cours d'année</div>
+      <div id="e1024-sortis-m"></div>
+    </div>
+
+    <!-- DASMO -->
+    <div class="page" id="page-dasmo">
+      <div id="dasmo-content-m"></div>
+    </div>
+
+</div><!-- /pages -->
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showMobilePage('dashboard',this)" id="nav-dashboard">
+      <span class="nav-ico">🏠</span>
+      <span>Accueil</span>
+      <span class="nav-badge" id="nb-alerts" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showMobilePage('alertes',this)" id="nav-alertes">
+      <span class="nav-ico">🔔</span>
+      <span>Alertes</span>
+    </button>
+    <button class="nav-item" onclick="showMobilePage('employes',this)" id="nav-employes">
+      <span class="nav-ico">👤</span>
+      <span>Employés</span>
+    </button>
+    <button class="nav-item" onclick="showMobilePage('clients',this)" id="nav-clients">
+      <span class="nav-ico">🏢</span>
+      <span>Clients</span>
+    </button>
+      <button class="nav-item" onclick="openSheet('more')" id="nav-more">
+      <span class="nav-ico">⋯</span>
+      <span>Plus</span>
+    </button>
+  </nav>
+
+  <!-- MENU PLUS (bottom sheet) -->
+  <div class="sheet-overlay" id="more-overlay" onclick="closeSheet('more')"></div>
+  <div class="sheet" id="more-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Toutes les sections</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:20px;">
+      <button onclick="showMobilePage('depotit');closeSheet('more')" class="more-btn">🏛️<br/><span>Dépôts IT</span></button>
+      <button onclick="showMobilePage('historique');closeSheet('more')" class="more-btn">📜<br/><span>Historique</span></button>
+      <button onclick="showMobilePage('signatures');closeSheet('more')" class="more-btn">✍️<br/><span>Signatures</span></button>
+      <button onclick="showMobilePage('departs');closeSheet('more')" class="more-btn">🚪<br/><span>Départs</span></button>
+      <button onclick="showMobilePage('avenants');closeSheet('more')" class="more-btn">📝<br/><span>Avenants</span></button>
+      <button onclick="showMobilePage('damt');closeSheet('more')" class="more-btn">📊<br/><span>DAMT</span></button>
+      <button onclick="showMobilePage('etat1024');closeSheet('more')" class="more-btn">📑<br/><span>État 1024</span></button>
+      <button onclick="showMobilePage('dasmo');closeSheet('more')" class="more-btn">📋<br/><span>DASMO</span></button>
+    </div>
+  </div>
+
+  <!-- FAB : Nouveau contrat -->
+  <button class="fab" onclick="openContratSheet()" id="fab-btn" title="Nouveau contrat">＋</button>
+
+</div><!-- /app -->
+
+<!-- ── CLIENT SHEET ──────────────────────────────────────────────────────── -->
+<div class="sheet-overlay" id="client-overlay" onclick="closeSheet('client')"></div>
+<div class="sheet" id="client-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="client-sheet-title">🏢 Nouveau client</div>
+  <div id="client-form-content"></div>
+</div>
+
+<!-- ── DETAIL SHEET ────────────────────────────────────────────────── -->
+<div class="sheet-overlay" id="detail-overlay" onclick="closeSheet('detail')"></div>
+<div class="sheet" id="detail-sheet">
+  <div class="sheet-handle"></div>
+  <div id="detail-content"></div>
+</div>
+
+<!-- ── CONTRAT SHEET ───────────────────────────────────────────────── -->
+<div class="sheet-overlay" id="contrat-overlay" onclick="closeSheet('contrat')"></div>
+<div class="sheet" id="contrat-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="contrat-sheet-title">Nouveau contrat</div>
+  <div id="contrat-form"></div>
+</div>
+
+<!-- ── DEPOT SHEET ─────────────────────────────────────────────────── -->
+<div class="sheet-overlay" id="depot-overlay" onclick="closeSheet('depot')"></div>
+<div class="sheet" id="depot-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">🏛️ Dépôt IT</div>
+  <div id="depot-form-content"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────
+// DATA + SHARED LOGIC (synced with desktop app localStorage)
+// ──────────────────────────────────────────────────────────────────
+// ── DATA ─────────────────────────────────────────────────────────────────────
+let CLIENTS = [
+  {id:"c1",nom:"Dakar Tech SA",secteur:"Technologie",couleur:"#3D7FFF",emoji:"💻",telephone:"",email:"",adresse:"",contact:""},
+  {id:"c2",nom:"BTP Sénégal",secteur:"BTP",couleur:"#F5A623",emoji:"🏗️",telephone:"",email:"",adresse:"",contact:""},
+  {id:"c3",nom:"Groupe Teranga",secteur:"Commerce",couleur:"#00C37A",emoji:"🛒",telephone:"",email:"",adresse:"",contact:""},
+  {id:"c4",nom:"Agri-Invest SARL",secteur:"Agriculture",couleur:"#6A4FFF",emoji:"🌾",telephone:"",email:"",adresse:"",contact:""},
+  {id:"c5",nom:"Cabinet Ndiaye",secteur:"Juridique",couleur:"#FF4560",emoji:"⚖️",telephone:"",email:"",adresse:"",contact:""},
+];
+let nextClientId = 6;
+
+let contrats = [
+  {id:1,nom:"Diallo",prenom:"Amadou",civilite:"M.",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"1 234 567 89012 34",adresse:"Médina, Dakar",poste:"Développeur",categorie:"Employés / Techniciens",statutSal:"Employé",matrimonial:"Marié(e) — Monogame",nbEpoux:1,nbEnfants:2,salaire:750000,clientId:"c1",type:"CDI",dateDebut:"2022-03-01",dateFin:"",statut:"Actif",renouvellements:0,
+    visaStatut:"ok",visaRef:"IT-2022-0041",visaDepot:"2022-03-05",visaDate:"2022-03-18",visaObs:"",
+    sigStatut:"signed",sigEnvoi:"2022-03-02",sigRetour:"2022-03-05",sigMode:"email",sigObs:"",sigRelances:[],motifSortie:"",
+    salKey:"diallo-amadou-c1",
+    historique:[
+      {type:"ESSAI",dateDebut:"2021-09-01",dateFin:"2021-12-01",statut:"Expiré",poste:"Développeur Junior",salaire:400000,visaStatut:"ok",visaRef:"IT-2021-0198",note:"Période d'essai validée"},
+      {type:"CDD",dateDebut:"2021-12-01",dateFin:"2022-03-01",statut:"Expiré",poste:"Développeur",salaire:550000,visaStatut:"ok",visaRef:"IT-2021-0245",note:"CDD de consolidation"},
+      {type:"CDI",dateDebut:"2022-03-01",dateFin:"",statut:"Actif",poste:"Développeur",salaire:750000,visaStatut:"ok",visaRef:"IT-2022-0041",note:"Titularisation en CDI",
+        evenements:[
+          {type:"salaire",date:"2023-01-01",ancienSalaire:750000,nouveauSalaire:850000,ancienPoste:"",nouveauPoste:"",note:"Révision annuelle"},
+          {type:"poste",date:"2023-07-01",ancienSalaire:0,nouveauSalaire:0,ancienPoste:"Développeur",nouveauPoste:"Lead Développeur",note:"Promotion"},
+          {type:"salaire",date:"2024-01-01",ancienSalaire:850000,nouveauSalaire:950000,ancienPoste:"",nouveauPoste:"",note:"Révision 2024"},
+        ]}
+    ]},
+  {id:2,nom:"Fall",prenom:"Fatou",civilite:"Mme",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"2 456 789 01234 56",adresse:"Plateau, Dakar",poste:"Comptable",categorie:"Employés / Techniciens",statutSal:"Employé",matrimonial:"Célibataire",nbEpoux:0,nbEnfants:0,salaire:450000,clientId:"c1",type:"CDD",dateDebut:"2024-01-15",dateFin:"2024-07-15",statut:"Expiré",renouvellements:2,
+    depart:{motif:"fin",date:"2024-07-15",preavis:"",obs:"Fin de CDD — 2 renouvellements atteints",docs:{certificat:{done:true,date:"2024-07-16"},solde:{done:true,date:"2024-07-20"}}},
+    visaStatut:"ok",visaRef:"IT-2024-0012",visaDepot:"2024-01-18",visaDate:"2024-02-01",visaObs:"",
+    sigStatut:"signed",sigEnvoi:"2024-01-16",sigRetour:"2024-01-20",sigMode:"email",sigObs:"",sigRelances:[],motifSortie:"Fin de CDD — non renouvelé",
+    salKey:"fall-fatou-c1",
+    historique:[
+      {type:"CDD",dateDebut:"2023-01-15",dateFin:"2023-07-15",statut:"Expiré",poste:"Comptable",salaire:380000,visaStatut:"ok",visaRef:"IT-2023-0010",note:"1er CDD"},
+      {type:"CDD",dateDebut:"2023-07-15",dateFin:"2024-01-15",statut:"Expiré",poste:"Comptable",salaire:410000,visaStatut:"ok",visaRef:"IT-2023-0089",note:"Renouvellement 1"},
+      {type:"CDD",dateDebut:"2024-01-15",dateFin:"2024-07-15",statut:"Expiré",poste:"Comptable",salaire:450000,visaStatut:"ok",visaRef:"IT-2024-0012",note:"Renouvellement 2 — dernier CDD"}
+    ]},
+  {id:3,nom:"Ndiaye",prenom:"Ibou",civilite:"M.",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"3 567 890 12345 67",adresse:"Parcelles Assainies, Dakar",poste:"Chef chantier",categorie:"Agents de maîtrise",statutSal:"Employé",matrimonial:"Marié(e) — Polygame",nbEpoux:2,nbEnfants:5,salaire:600000,clientId:"c2",type:"CDD",dateDebut:"2024-06-01",dateFin:"2025-06-01",statut:"Actif",renouvellements:1,
+    visaStatut:"ok",visaRef:"IT-2024-0089",visaDepot:"2024-06-03",visaDate:"2024-06-20",visaObs:"",
+    sigStatut:"signed",sigEnvoi:"2024-06-02",sigRetour:"2024-06-08",sigMode:"coursier",sigObs:"",sigRelances:[],motifSortie:"",
+    salKey:"ndiaye-ibou-c2",
+    historique:[
+      {type:"ESSAI",dateDebut:"2024-03-01",dateFin:"2024-06-01",statut:"Expiré",poste:"Chef chantier",salaire:500000,visaStatut:"ok",visaRef:"IT-2024-0044",note:"Essai réussi"},
+      {type:"CDD",dateDebut:"2024-06-01",dateFin:"2025-06-01",statut:"Actif",poste:"Chef chantier",salaire:600000,visaStatut:"ok",visaRef:"IT-2024-0089",note:"CDD en cours",
+        evenements:[{type:"salaire",date:"2025-01-01",ancienSalaire:600000,nouveauSalaire:650000,ancienPoste:"",nouveauPoste:"",note:"Augmentation mi-contrat"}]}
+    ]},
+  {id:4,nom:"Sow",prenom:"Aïssatou",civilite:"Mme",nationalite:"Guinéenne",pieceType:"Passeport",pieceNum:"GN-2024-08871",adresse:"Liberté 6, Dakar",poste:"Assistante RH",categorie:"Employés / Techniciens",statutSal:"Employé",matrimonial:"Célibataire",nbEpoux:0,nbEnfants:0,salaire:320000,clientId:"c2",type:"ESSAI",dateDebut:"2026-02-01",dateFin:"2026-05-01",statut:"Actif",renouvellements:0,
+    visaStatut:"pending",visaRef:"IT-2026-0031",visaDepot:"2026-02-04",visaDate:"",visaObs:"Dossier déposé, en attente",
+    sigStatut:"sent",sigEnvoi:"2026-02-02",sigRetour:"",sigMode:"email",sigObs:"En attente de retour",sigRelances:[{date:"2026-02-18",mode:"email",note:"1ère relance"},{date:"2026-03-01",mode:"whatsapp",note:"Relance WhatsApp"}],motifSortie:"",
+    salKey:"sow-aissatou-c2",
+    historique:[{type:"ESSAI",dateDebut:"2026-02-01",dateFin:"2026-05-01",statut:"Actif",poste:"Assistante RH",salaire:320000,visaStatut:"pending",visaRef:"IT-2026-0031",note:"Période d'essai en cours"}]},
+  {id:5,nom:"Ba",prenom:"Mamadou",civilite:"M.",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"5 789 012 34567 89",adresse:"Rufisque, Dakar",poste:"Commercial",categorie:"Employés / Techniciens",statutSal:"Stagiaire",matrimonial:"Célibataire",nbEpoux:0,nbEnfants:0,salaire:380000,clientId:"c3",type:"STAGE",dateDebut:"2026-01-10",dateFin:"2026-04-10",statut:"Actif",renouvellements:0,
+    visaStatut:"none",visaRef:"",visaDepot:"",visaDate:"",visaObs:"",
+    sigStatut:"unsent",sigEnvoi:"",sigRetour:"",sigMode:"",sigObs:"Contrat en préparation",sigRelances:[],motifSortie:"",
+    salKey:"ba-mamadou-c3",
+    historique:[{type:"STAGE",dateDebut:"2026-01-10",dateFin:"2026-04-10",statut:"Actif",poste:"Commercial",salaire:380000,visaStatut:"none",visaRef:"",note:"Stage en cours"}]},
+  {id:6,nom:"Diop",prenom:"Khadija",civilite:"Mme",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"6 890 123 45678 90",adresse:"Almadies, Dakar",poste:"Juriste",categorie:"Cadres moyens",statutSal:"Cadre",matrimonial:"Marié(e) — Monogame",nbEpoux:1,nbEnfants:1,salaire:520000,clientId:"c5",type:"ESSAI",dateDebut:"2025-12-01",dateFin:"2026-03-01",statut:"Actif",renouvellements:2,
+    visaStatut:"refused",visaRef:"IT-2025-0210",visaDepot:"2025-12-05",visaDate:"",visaObs:"Dossier incomplet",
+    sigStatut:"refused",sigEnvoi:"2025-12-02",sigRetour:"",sigMode:"email",sigObs:"Client demande modifications clause 4",sigRelances:[{date:"2026-01-10",mode:"email",note:"Renvoi contrat corrigé"}],motifSortie:"",
+    salKey:"diop-khadija-c5",
+    historique:[{type:"ESSAI",dateDebut:"2025-12-01",dateFin:"2026-03-01",statut:"Actif",poste:"Juriste",salaire:520000,visaStatut:"refused",visaRef:"IT-2025-0210",note:"Visa refusé — dossier à corriger"}]},
+  {id:7,nom:"Sarr",prenom:"Ousmane",civilite:"M.",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"7 901 234 56789 01",adresse:"Thiès, Sénégal",poste:"Agronome",categorie:"Cadres moyens",statutSal:"Cadre",matrimonial:"Marié(e) — Polygame",nbEpoux:2,nbEnfants:7,salaire:490000,clientId:"c4",type:"CDI",dateDebut:"2020-05-01",dateFin:"",statut:"Actif",renouvellements:0,
+    visaStatut:"ok",visaRef:"IT-2020-0055",visaDepot:"2020-05-06",visaDate:"2020-05-22",visaObs:"",
+    sigStatut:"signed",sigEnvoi:"2020-05-02",sigRetour:"2020-05-07",sigMode:"coursier",sigObs:"",sigRelances:[],motifSortie:"",
+    salKey:"sarr-ousmane-c4",
+    historique:[
+      {type:"ESSAI",dateDebut:"2019-11-01",dateFin:"2020-02-01",statut:"Expiré",poste:"Agronome Junior",salaire:300000,visaStatut:"ok",visaRef:"IT-2019-0311",note:"Essai validé"},
+      {type:"CDD",dateDebut:"2020-02-01",dateFin:"2020-05-01",statut:"Expiré",poste:"Agronome",salaire:380000,visaStatut:"ok",visaRef:"IT-2020-0012",note:"CDD de transition"},
+      {type:"CDI",dateDebut:"2020-05-01",dateFin:"",statut:"Actif",poste:"Agronome",salaire:490000,visaStatut:"ok",visaRef:"IT-2020-0055",note:"CDI — 5 ans ancienneté",
+        evenements:[
+          {type:"salaire",date:"2021-05-01",ancienSalaire:490000,nouveauSalaire:540000,ancienPoste:"",nouveauPoste:"",note:"1ère révision"},
+          {type:"poste",date:"2022-01-01",ancienSalaire:0,nouveauSalaire:0,ancienPoste:"Agronome",nouveauPoste:"Agronome Senior",note:"Montée en grade"},
+          {type:"salaire",date:"2023-01-01",ancienSalaire:540000,nouveauSalaire:620000,ancienPoste:"",nouveauPoste:"",note:"Révision 2023"},
+        ]}
+    ]},
+  {id:8,nom:"Mbaye",prenom:"Rokhaya",civilite:"Mme",nationalite:"Sénégalaise",pieceType:"CNI",pieceNum:"8 012 345 67890 12",adresse:"Grand Yoff, Dakar",poste:"Caissière",categorie:"Ouvriers non qualifiés",statutSal:"Ouvrier",matrimonial:"Célibataire",nbEpoux:0,nbEnfants:0,salaire:250000,clientId:"c3",type:"CDD",dateDebut:"2025-09-01",dateFin:"2026-03-20",statut:"Actif",renouvellements:1,
+    visaStatut:"pending",visaRef:"IT-2025-0178",visaDepot:"2025-09-03",visaDate:"",visaObs:"",
+    sigStatut:"sent",sigEnvoi:"2025-09-02",sigRetour:"",sigMode:"email",sigObs:"",sigRelances:[{date:"2025-10-05",mode:"email",note:"1ère relance"},{date:"2025-11-10",mode:"whatsapp",note:"2ème relance"},{date:"2026-01-15",mode:"coursier",note:"Coursier envoyé"}],motifSortie:"",
+    salKey:"mbaye-rokhaya-c3",
+    historique:[
+      {type:"STAGE",dateDebut:"2025-03-01",dateFin:"2025-09-01",statut:"Expiré",poste:"Caissière",salaire:150000,visaStatut:"ok",visaRef:"IT-2025-0041",note:"Stage 6 mois"},
+      {type:"CDD",dateDebut:"2025-09-01",dateFin:"2026-03-20",statut:"Actif",poste:"Caissière",salaire:250000,visaStatut:"pending",visaRef:"IT-2025-0178",note:"1er CDD post-stage"}
+    ]},
+];
+let nextId = 9;
+let editingId = null;
+let selectedClientId = null;
+let currentAlertTab = "all";
+let currentVisaTab = "all";
+let currentSigTab = "all";
+let sortKey = "nom", sortDir = 1;
+let histDetailKey = null;
+let evTarget = null;
+let pendingRelances = [];
+let editingClientId = null;
+let damtYear = new Date().getFullYear();
+let damtSelectedMonth = null;
+
+
+const USERS = [
+  {id:"u1", login:"IBM",   password:"07102002", nom:"IBM",   role:"admin"},
+  {id:"u2", login:"ARAME", password:"AMSATOU",  nom:"ARAME", role:"grh"},
+];
+let dasmoData = {};
+
+// ──────────────────────────────────────────────────────────────────
+// FIREBASE CONFIG & INIT
+// ──────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyA-aHleDdwy5bWz23jCUdiZylEMLr5R4Ik",
+  authDomain: "ab-partners-rh.firebaseapp.com",
+  projectId: "ab-partners-rh",
+  storageBucket: "ab-partners-rh.firebasestorage.app",
+  messagingSenderId: "31271396591",
+  appId: "1:31271396591:web:a62de2c2aae3e60e79a71a"
+};
+
+let db = null;
+let fbReady = false;
+let syncTimeout = null;
+const SYNC_DELAY = 800; // ms debounce avant sauvegarde
+
+function initFirebase(){
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    fbReady = true;
+    console.log("✅ Firebase connecté");
+  }catch(e){
+    console.warn("Firebase non disponible, mode local activé", e);
+    fbReady = false;
+  }
+}
+
+// Afficher un indicateur de sync
+function showSyncIndicator(status){
+  let el = document.getElementById("sync-dot");
+  if(!el) return;
+  if(status === "saving"){
+    el.style.background = "var(--orange)";
+    el.title = "Synchronisation en cours…";
+  } else if(status === "ok"){
+    el.style.background = "var(--green)";
+    el.title = "Données synchronisées";
+  } else {
+    el.style.background = "var(--red)";
+    el.title = "Hors ligne — données locales";
+  }
+}
+
+// ── SAVE : Firebase (avec fallback localStorage) ─────────────────────────────
+function saveLocal(){
+  // Sauvegarde locale immédiate (fallback)
+  try{
+    localStorage.setItem("cf_contrats", JSON.stringify(contrats));
+    localStorage.setItem("cf_clients",  JSON.stringify(CLIENTS));
+    localStorage.setItem("cf_nextClientId", String(nextClientId));
+    localStorage.setItem("cf_nextId", String(nextId));
+  }catch(e){}
+
+  // Sauvegarde Firebase avec debounce
+  if(!fbReady || !db) return;
+  showSyncIndicator("saving");
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async ()=>{
+    try{
+      await db.collection("app_data").doc("main").set({
+        contrats: JSON.stringify(contrats),
+        clients:  JSON.stringify(CLIENTS),
+        nextId,
+        nextClientId,
+        updatedAt: new Date().toISOString(),
+      });
+      showSyncIndicator("ok");
+    }catch(e){
+      console.error("Erreur sync Firebase:", e);
+      showSyncIndicator("error");
+    }
+  }, SYNC_DELAY);
+}
+
+// ── LOAD : Firebase (avec fallback localStorage) ──────────────────────────────
+async function loadLocal(){
+  // D'abord charger depuis localStorage (affichage immédiat)
+  loadFromLocalStorage();
+
+  // Puis charger depuis Firebase (données fraîches)
+  if(!fbReady || !db){
+    showSyncIndicator("error");
+    return;
+  }
+  try{
+    showSyncIndicator("saving");
+    const doc = await db.collection("app_data").doc("main").get();
+    if(doc.exists){
+      const data = doc.data();
+      if(data.contrats){
+        const parsed = JSON.parse(data.contrats);
+        if(Array.isArray(parsed)){
+          contrats = parsed;
+          nextId = data.nextId || Math.max(...parsed.map(c=>c.id), nextId-1)+1;
+        }
+      }
+      if(data.clients){
+        const parsed = JSON.parse(data.clients);
+        if(Array.isArray(parsed)&&parsed.length>0){
+          CLIENTS.length=0;
+          parsed.forEach(c=>CLIENTS.push(c));
+          nextClientId = data.nextClientId || nextClientId;
+        }
+      }
+      // Mettre à jour localStorage avec données Firebase
+      localStorage.setItem("cf_contrats", JSON.stringify(contrats));
+      localStorage.setItem("cf_clients",  JSON.stringify(CLIENTS));
+      showSyncIndicator("ok");
+      renderAll();
+    } else {
+      // Première utilisation : uploader les données locales vers Firebase
+      showSyncIndicator("ok");
+      saveLocal();
+    }
+  }catch(e){
+    console.error("Erreur chargement Firebase:", e);
+    showSyncIndicator("error");
+  }
+
+  // Écoute les changements en temps réel
+  listenRealtime();
+}
+
+function loadFromLocalStorage(){
+  try{
+    const dc = localStorage.getItem("cf_contrats");
+    if(dc){ contrats=JSON.parse(dc); nextId=Math.max(...JSON.parse(dc).map(c=>c.id),nextId-1)+1; }
+    const dk = localStorage.getItem("cf_clients");
+    if(dk){ const p=JSON.parse(dk); if(Array.isArray(p)&&p.length>0){CLIENTS.length=0;p.forEach(c=>CLIENTS.push(c));} }
+    const dn = localStorage.getItem("cf_nextClientId");
+    if(dn) nextClientId=parseInt(dn)||nextClientId;
+  }catch(e){}
+}
+
+// Écoute temps réel : màj auto si quelqu'un modifie depuis un autre appareil
+let unsubscribeRealtime = null;
+function listenRealtime(){
+  if(!fbReady||!db) return;
+  if(unsubscribeRealtime) unsubscribeRealtime();
+  unsubscribeRealtime = db.collection("app_data").doc("main")
+    .onSnapshot(doc=>{
+      if(!doc.exists) return;
+      const data = doc.data();
+      // Ignorer si c'est notre propre sauvegarde (< 2s)
+      const updated = new Date(data.updatedAt||0);
+      if(Date.now()-updated.getTime() < 2000) return;
+      if(data.contrats){
+        try{
+          const parsed=JSON.parse(data.contrats);
+          if(Array.isArray(parsed)){
+            contrats=parsed;
+            nextId=data.nextId||Math.max(...parsed.map(c=>c.id),nextId-1)+1;
+            localStorage.setItem("cf_contrats",JSON.stringify(contrats));
+          }
+        }catch(e){}
+      }
+      if(data.clients){
+        try{
+          const parsed=JSON.parse(data.clients);
+          if(Array.isArray(parsed)&&parsed.length>0){
+            CLIENTS.length=0;parsed.forEach(c=>CLIENTS.push(c));
+            nextClientId=data.nextClientId||nextClientId;
+            localStorage.setItem("cf_clients",JSON.stringify(CLIENTS));
+          }
+        }catch(e){}
+      }
+      showSyncIndicator("ok");
+      renderAll();
+      showToast("🔄 Données mises à jour","green");
+    }, err=>{ showSyncIndicator("error"); console.error("Realtime error:", err); });
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+
+
+// ──────────────────────────────────────────────────────────────────
+// UTILITIES
+// ──────────────────────────────────────────────────────────────────
+const fmtD = d => d ? new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const fmtDShort = d => d ? new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"}) : "—";
+function fmt(n){ return n ? Number(n).toLocaleString("fr-FR") + " F" : "—"; }
+const clientName = id => (CLIENTS.find(c=>c.id===id)||{nom:"—"}).nom;
+const client = id => CLIENTS.find(c=>c.id===id)||{};
+function joursRestants(d){ return d ? Math.ceil((new Date(d)-new Date())/(864e5)) : null; }
+function joursDepuis(d){ return d ? Math.floor((new Date()-new Date(d))/(864e5)) : null; }
+function anciennete(debut){
+  if(!debut) return "—";
+  const d=new Date(debut),n=new Date();
+  let a=n.getFullYear()-d.getFullYear(),m=n.getMonth()-d.getMonth();
+  if(m<0){a--;m+=12;}
+  return a>0 ? `${a}an${a>1?"s":""} ${m>0?m+"m":""}`.trim() : `${m}m`;
+}
+function avatarColor(nom){
+  const cols=["#3D7FFF","#6A4FFF","#00C37A","#F5A623","#FF4560","#00BCD4","#9B59B6","#E67E22"];
+  let h=0; for(let i=0;i<nom.length;i++) h=nom.charCodeAt(i)+((h<<5)-h);
+  return cols[Math.abs(h)%cols.length];
+}
+function requiresVisaIT(t){ return /^(CDI|CDD|STAGE|EXPATRIE)/i.test(t); }
+function contractFamily(t){
+  if(/^STAGE/i.test(t)) return "stage";
+  if(/^ESSAI/i.test(t)) return "essai";
+  if(/^CDD/i.test(t))   return "cdd";
+  return "other";
+}
+function typeBadge(t){
+  const cls=(t||"").replace(/\s+/g,"-");
+  return `<span class="type-badge type-${cls}">${t}</span>`;
+}
+function statusBadge(s){
+  const m={Actif:"b-actif",Expiré:"b-expire",Résilié:"b-resilie"};
+  return `<span class="badge ${m[s]||"b-expire"}">${s}</span>`;
+}
+function contratDureeJours(c){
+  if(!c.dateDebut||!c.dateFin) return 0;
+  return Math.ceil((new Date(c.dateFin)-new Date(c.dateDebut))/(864e5));
+}
+function familyDureeJours(c){
+  const key=c.salKey||(c.nom+c.prenom+c.clientId), fam=contractFamily(c.type);
+  return contrats.filter(x=>(x.salKey||(x.nom+x.prenom+x.clientId))===key&&contractFamily(x.type)===fam)
+    .reduce((s,x)=>s+contratDureeJours(x),0);
+}
+function isFamilyExhausted(c){
+  if(/^CDD 2$/i.test(c.type)&&c.renouvellements>=1) return true;
+  if(/^ESSAI 2$/i.test(c.type)&&c.renouvellements>=1) return true;
+  const j=familyDureeJours(c);
+  if(/^CDD/i.test(c.type)&&j>=730) return true;
+  if(/^ESSAI/i.test(c.type)&&j>=183) return true;
+  if(/^STAGE/i.test(c.type)&&j>=730) return true;
+  return false;
+}
+function isSuperseded(c){
+  return contrats.some(x=>x.id!==c.id&&x.statut==="Actif"&&
+    (x.salKey===c.salKey||(x.nom===c.nom&&x.prenom===c.prenom&&x.clientId===c.clientId)));
+}
+function nextContractType(c){
+  const type=typeof c==="string"?c:c.type;
+  const r=typeof c==="string"?0:(c.renouvellements||0);
+  if(/^ESSAI 1/i.test(type)) return r>=1?"CDD 1":"ESSAI 2";
+  if(/^ESSAI 2/i.test(type)) return "CDD 1";
+  if(/^CDD 1/i.test(type))   return r>=1?"CDI":"CDD 2";
+  if(/^CDD 2/i.test(type))   return "CDI";
+  if(/^STAGE 1/i.test(type)) return "STAGE 2";
+  if(/^STAGE 2/i.test(type)) return "CDD 1";
+  if(/^EXPATRIE/i.test(type)) return "EXPATRIE";
+  return "CDI";
+}
+function showToast(msg, type="green"){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.style.background=type==="red"?"rgba(255,69,96,0.9)":type==="orange"?"rgba(245,166,35,0.9)":"rgba(0,195,122,0.9)";
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2800);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// ALERTS
+// ──────────────────────────────────────────────────────────────────
+function getAlertes(){
+  const alerts=[];
+  contrats.forEach(c=>{
+    if(c.statut!=="Actif") return;
+    if(!c.dateFin) return;
+    const jr=joursRestants(c.dateFin);
+    const hasSuccessor=contrats.some(x=>x.id!==c.id&&x.statut==="Actif"&&
+      (x.salKey===c.salKey||(x.nom===c.nom&&x.prenom===c.prenom&&x.clientId===c.clientId)));
+    if(hasSuccessor) return;
+    const canRenew=c.type!=="CDI";
+    if(jr!==null&&jr<=30&&jr>=0)
+      alerts.push({type:"urgent",emp:c,cli:client(c.clientId),jr,canRenew,level:"danger",icon:"🔴"});
+    else if(jr!==null&&jr<=60&&jr>=0)
+      alerts.push({type:"attention",emp:c,cli:client(c.clientId),jr,canRenew,level:"warn",icon:"🟠"});
+  });
+  // Expirés sans décision
+  contrats.forEach(c=>{
+    if(c.statut!=="Expiré") return;
+    if(c.depart) return;
+    if(isSuperseded(c)) return;
+    const jd=c.dateFin?joursDepuis(c.dateFin):null;
+    if(jd===null||jd<0) return;
+    alerts.push({type:"expire",emp:c,cli:client(c.clientId),jd,canRenew:c.type!=="CDI",level:"danger",icon:"🔴",isExpired:true});
+  });
+  return alerts;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// AUTH
+// ──────────────────────────────────────────────────────────────────
+let currentUser=null;
+
+function doLogin(){
+  const login=document.getElementById("l-user").value.trim();
+  const pass=document.getElementById("l-pass").value;
+  try{
+    const pwds=JSON.parse(localStorage.getItem("cf_pwds")||"{}");
+    USERS.forEach(u=>{if(pwds[u.id])u.password=pwds[u.id];});
+  }catch(e){}
+  const user=USERS.find(u=>u.login.toLowerCase()===login.toLowerCase()&&u.password===pass);
+  if(!user){
+    const e=document.getElementById("l-err"); e.style.display="block";
+    document.getElementById("l-pass").value="";
+    setTimeout(()=>e.style.display="none",3000); return;
+  }
+  currentUser=user;
+  try{sessionStorage.setItem("cf_mob_session",JSON.stringify({id:user.id,login:user.login}));}catch(e){}
+  document.getElementById("l-err").style.display="none";
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app").classList.add("visible");
+  document.getElementById("user-name").textContent=user.nom;
+  loadLocal();
+  renderAll();
+}
+
+function doLogout(){
+  if(!confirm("Se déconnecter ?")) return;
+  currentUser=null;
+  try{sessionStorage.removeItem("cf_mob_session");}catch(e){}
+  document.getElementById("app").classList.remove("visible");
+  document.getElementById("login-screen").style.display="flex";
+}
+
+async function resetApp(){
+  if(!confirm("Réinitialiser toutes les données ?\n\nCette action supprimera aussi les données sur Firebase.")) return;
+  try{localStorage.clear();sessionStorage.clear();}catch(e){}
+  if(fbReady&&db){
+    try{ await db.collection("app_data").doc("main").delete(); }catch(e){}
+  }
+  location.reload();
+}
+
+function checkSession(){
+  try{
+    const pwds=JSON.parse(localStorage.getItem("cf_pwds")||"{}");
+    USERS.forEach(u=>{if(pwds[u.id])u.password=pwds[u.id];});
+    const s=sessionStorage.getItem("cf_mob_session");
+    if(s){
+      const saved=JSON.parse(s);
+      const user=USERS.find(u=>u.id===saved.id&&u.login===saved.login);
+      if(user){
+        currentUser=user;
+        document.getElementById("login-screen").style.display="none";
+        document.getElementById("app").classList.add("visible");
+        document.getElementById("user-name").textContent=user.nom;
+        loadLocal(); renderAll(); return;
+      }
+    }
+  }catch(e){}
+}
+
+// ──────────────────────────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────────────────────────
+const PAGE_TITLES={dashboard:"Tableau de bord",alertes:"Alertes",employes:"Employés",clients:"Clients",depotit:"Dépôts IT",historique:"Historique",signatures:"Signatures",departs:"Départs",avenants:"Avenants",damt:"DAMT",etat1024:"État 1024",dasmo:"DASMO"};
+let currentPage="dashboard";
+let empFilter="", depotFilter="", alertFilter="all";
+
+function showMobilePage(name, btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+  document.getElementById("page-"+name).classList.add("active");
+  if(btn) btn.classList.add("active");
+  document.getElementById("page-title").textContent=PAGE_TITLES[name]||name;
+  currentPage=name;
+  // Show/hide FAB
+  document.getElementById("fab-btn").style.display=(name==="employes"||name==="clients")?"flex":"none";
+  document.getElementById("fab-btn").onclick = name==="clients" ? openAddClientSheet : openContratSheet;
+  document.getElementById("fab-btn").title = name==="clients" ? "Nouveau client" : "Nouveau contrat";
+  if(name==="alertes") renderAlertesMobile();
+  if(name==="employes") renderEmployesMobile("");
+  if(name==="clients") renderClientsMobile("");
+  if(name==="depotit")    renderDepotMobile();
+  if(name==="historique") renderHistoriqueMobile("");
+  if(name==="signatures") renderSignaturesMobile();
+  if(name==="departs")    renderDepartsMobile("");
+  if(name==="avenants")   renderAvenantsMobile("");
+  if(name==="damt")       renderDAMTMobile();
+  if(name==="etat1024")   renderEtat1024Mobile();
+  if(name==="dasmo")      renderDasmoMobile();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DASHBOARD
+// ──────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const actifs=contrats.filter(c=>c.statut==="Actif").length;
+  const alerts=getAlertes();
+  const nonVises=contrats.filter(c=>c.statut==="Actif"&&requiresVisaIT(c.type)&&(!c.visaStatut||c.visaStatut==="none")).length;
+  const expiresSansDecision=contrats.filter(c=>c.statut==="Expiré"&&!c.depart&&!isSuperseded(c)).length;
+
+  document.getElementById("dash-stats").innerHTML=[
+    {ico:"👤",val:actifs,lbl:"Contrats actifs",color:"var(--accent)"},
+    {ico:"🔔",val:alerts.length,lbl:"Alertes actives",color:"var(--orange)"},
+    {ico:"🔏",val:nonVises,lbl:"Non soumis IT",color:"var(--red)"},
+    {ico:"⏰",val:expiresSansDecision,lbl:"Décisions en attente",color:"var(--purple)"},
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.color}22">
+    <div class="ico">${s.ico}</div>
+    <div class="val" style="color:${s.color}">${s.val}</div>
+    <div class="lbl">${s.lbl}</div>
+  </div>`).join("");
+
+  // Show top 5 alerts on dashboard
+  const alertHtml=alerts.slice(0,5).map(a=>buildAlertCard(a)).join("")||
+    `<div class="empty"><div class="e-ico">✅</div><p>Aucune alerte active</p></div>`;
+  document.getElementById("dash-alerts-list").innerHTML=alertHtml;
+
+  // Badge
+  const nb=document.getElementById("nb-alerts");
+  nb.textContent=alerts.length; nb.style.display=alerts.length?"inline":"none";
+}
+
+// ──────────────────────────────────────────────────────────────────
+// ALERTES
+// ──────────────────────────────────────────────────────────────────
+function filterAlerts(type, btn){
+  alertFilter=type;
+  document.querySelectorAll("#alert-chips .chip").forEach(c=>c.classList.remove("active"));
+  btn.classList.add("active");
+  renderAlertesMobile();
+}
+
+function renderAlertesMobile(){
+  let alerts=getAlertes();
+  if(alertFilter!=="all") alerts=alerts.filter(a=>a.type===alertFilter);
+  const el=document.getElementById("alertes-list");
+  el.innerHTML=alerts.map(a=>buildAlertCard(a)).join("")||
+    `<div class="empty"><div class="e-ico">✅</div><p>Aucune alerte</p></div>`;
+}
+
+function buildAlertCard(a){
+  const c=a.emp, cli=a.cli;
+  const name=`${c.civilite||""} ${c.prenom} ${c.nom}`.trim();
+  const sub=`${c.poste} · ${cli.nom||"—"}`;
+  let msg="", days="";
+  if(a.isExpired){
+    msg=`Expiré depuis ${a.jd}j — décision requise`;
+  } else {
+    msg=`Fin dans ${a.jr} jour${a.jr>1?"s":""}`;
+    days=`${a.jr}j`;
+  }
+  const actions=a.canRenew?`
+    <div class="a-actions">
+      <button class="a-btn renouv" onclick="event.stopPropagation();openRenouvSheet(${c.id})">🔄 Renouveler</button>
+      <button class="a-btn stop" onclick="event.stopPropagation();openDetail(${c.id})">🚶 Voir dossier</button>
+    </div>`:`
+    <div class="a-actions">
+      <button class="a-btn stop" onclick="event.stopPropagation();openDetail(${c.id})">👁 Voir le dossier</button>
+    </div>`;
+  return `<div class="alert-card ${a.level}" onclick="openDetail(${c.id})">
+    <div class="a-head">
+      <span class="a-ico">${a.icon}</span>
+      <div class="a-title">${name}</div>
+      ${days?`<div class="a-days">${days}</div>`:""}
+    </div>
+    <div class="a-detail">${sub} · ${typeBadge(c.type)}</div>
+    <div class="a-detail" style="margin-top:3px">${msg}</div>
+    ${actions}
+  </div>`;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// EMPLOYÉS
+// ──────────────────────────────────────────────────────────────────
+function filterEmps(status, btn){
+  empFilter=status;
+  document.querySelectorAll("#emp-chips .chip").forEach(c=>c.classList.remove("active"));
+  btn.classList.add("active");
+  renderEmployesMobile("");
+}
+
+function renderEmployesMobile(q){
+  q=(q||"").toLowerCase();
+  const alerts=getAlertes();
+  let rows=contrats.filter(c=>{
+    const match=`${c.nom} ${c.prenom} ${c.poste}`.toLowerCase().includes(q)||clientName(c.clientId).toLowerCase().includes(q);
+    if(!match) return false;
+    if(empFilter) return c.statut===empFilter;
+    if(c.statut==="Actif") return true;
+    if(c.statut==="Expiré"&&!c.depart&&!isSuperseded(c)) return true;
+    return false;
+  }).sort((a,b)=>a.nom.localeCompare(b.nom));
+
+  const el=document.getElementById("emp-list");
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="e-ico">🔎</div><p>Aucun salarié trouvé</p></div>`; return;
+  }
+  const alertIds=new Set(alerts.map(a=>a.emp.id));
+  const urgentIds=new Set(alerts.filter(a=>a.level==="danger").map(a=>a.emp.id));
+
+  el.innerHTML=rows.map(c=>{
+    const col=avatarColor(c.nom);
+    const jr=c.dateFin?joursRestants(c.dateFin):null;
+    const jrText=jr!==null?(jr>=0?`${jr}j`:"Expiré"):c.statut==="CDI"?"CDI":"";
+    const cardClass=urgentIds.has(c.id)?"urgent":alertIds.has(c.id)?"warn":"";
+    return `<div class="emp-card ${cardClass}" onclick="openDetail(${c.id})">
+      <div class="emp-avatar" style="background:${col}22;color:${col}">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+      <div class="emp-info">
+        <div class="emp-name">${c.prenom} ${c.nom}</div>
+        <div class="emp-sub">${c.poste} · ${clientName(c.clientId)}</div>
+      </div>
+      <div class="emp-right">
+        ${typeBadge(c.type)}
+        ${jrText?`<span style="font-size:11px;font-family:JetBrains Mono,monospace;color:${jr!==null&&jr<=30?"var(--red)":jr!==null&&jr<=60?"var(--orange)":"var(--muted)"}">${jrText}</span>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// CLIENTS
+// ──────────────────────────────────────────────────────────────────
+function renderClientsMobile(q){
+  q=(q||"").toLowerCase();
+  const rows=CLIENTS.filter(c=>(c.nom||"").toLowerCase().includes(q)||(c.secteur||"").toLowerCase().includes(q));
+  const el=document.getElementById("clients-list");
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="e-ico">🏢</div><p>Aucun client trouvé</p></div>`; return;
+  }
+  el.innerHTML=rows.map(c=>{
+    const nbActifs=contrats.filter(x=>x.clientId===c.id&&x.statut==="Actif").length;
+    const nbTotal=contrats.filter(x=>x.clientId===c.id).length;
+    const color=c.couleur||"#3D7FFF";
+    return `<div class="emp-card" onclick="openClientDetail('${c.id}')">
+      <div class="emp-avatar" style="background:${color}22;color:${color};font-size:22px">${c.emoji||"🏢"}</div>
+      <div class="emp-info">
+        <div class="emp-name">${c.nom}</div>
+        <div class="emp-sub">${c.secteur||"—"} ${c.contact?`· ${c.contact}`:""}</div>
+      </div>
+      <div class="emp-right">
+        <span style="font-size:13px;font-weight:700;color:var(--green)">${nbActifs}</span>
+        <span style="font-size:10px;color:var(--muted)">actifs/${nbTotal}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openClientDetail(id){
+  const c=CLIENTS.find(x=>x.id===id);
+  if(!c) return;
+  const color=c.couleur||"#3D7FFF";
+  const empActifs=contrats.filter(x=>x.clientId===id&&x.statut==="Actif");
+  const empExpires=contrats.filter(x=>x.clientId===id&&x.statut==="Expiré"&&!x.depart&&!isSuperseded(x));
+  const empTous=[...empActifs,...empExpires];
+
+  const empHtml=empTous.length?empTous.map(emp=>{
+    const jr=emp.dateFin?joursRestants(emp.dateFin):null;
+    return `<div class="emp-card ${jr!==null&&jr<=30?"urgent":jr!==null&&jr<=60?"warn":""}" onclick="closeSheet('detail');openDetail(${emp.id})" style="margin-bottom:8px;">
+      <div class="emp-avatar" style="background:${avatarColor(emp.nom)}22;color:${avatarColor(emp.nom)};font-size:14px;width:38px;height:38px;border-radius:10px;">${(emp.prenom[0]||"")+(emp.nom[0]||"")}</div>
+      <div class="emp-info">
+        <div class="emp-name" style="font-size:13px">${emp.prenom} ${emp.nom}</div>
+        <div class="emp-sub" style="font-size:11px">${emp.poste}</div>
+      </div>
+      <div class="emp-right">
+        ${typeBadge(emp.type)}
+        ${jr!==null?`<span style="font-size:10px;font-family:JetBrains Mono,monospace;color:${jr<=30?"var(--red)":jr<=60?"var(--orange)":"var(--muted)"}">${jr>=0?jr+"j":"Expiré"}</span>`:""}
+      </div>
+    </div>`;
+  }).join(""):`<div class="empty" style="padding:24px"><div class="e-ico">👤</div><p>Aucun salarié actif</p></div>`;
+
+  document.getElementById("detail-content").innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div style="width:56px;height:56px;border-radius:16px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">${c.emoji||"🏢"}</div>
+      <div>
+        <div style="font-family:Fraunces,serif;font-size:20px;font-weight:700">${c.nom}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">${c.secteur||"—"}</div>
+      </div>
+    </div>
+    <div style="background:var(--s2);border-radius:14px;padding:16px;margin-bottom:20px;">
+      <div class="d-row"><span class="d-lbl">Contact</span><span class="d-val">${c.contact||"—"}</span></div>
+      <div class="d-row"><span class="d-lbl">Téléphone</span><span class="d-val">${c.telephone||"—"}</span></div>
+      <div class="d-row"><span class="d-lbl">Email</span><span class="d-val">${c.email||"—"}</span></div>
+      <div class="d-row"><span class="d-lbl">Adresse</span><span class="d-val">${c.adresse||"—"}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div style="background:rgba(0,195,122,0.08);border:1px solid rgba(0,195,122,0.2);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-family:Fraunces,serif;font-size:26px;font-weight:700;color:var(--green)">${empActifs.length}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Contrats actifs</div>
+      </div>
+      <div style="background:rgba(110,113,145,0.08);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-family:Fraunces,serif;font-size:26px;font-weight:700;color:var(--soft)">${contrats.filter(x=>x.clientId===id).length}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Total contrats</div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Salariés</div>
+    ${empHtml}
+    <div style="margin-top:16px;padding-bottom:8px;display:flex;flex-direction:column;gap:10px;">
+      <button onclick="closeSheet('detail');openContratSheet()" style="padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">＋ Nouveau contrat</button>
+      <button onclick="closeSheet('detail');openClientSheet('${id}')" style="padding:14px;border-radius:14px;border:1.5px solid rgba(61,127,255,0.3);background:rgba(61,127,255,0.08);color:var(--accent);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">✏️ Modifier ce client</button>
+      ${currentUser?.role==="admin"&&empTous.length===0?`<button onclick="deleteClientMobile('${id}')" style="padding:14px;border-radius:14px;border:1.5px solid rgba(255,69,96,0.2);background:rgba(255,69,96,0.08);color:var(--red);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">🗑️ Supprimer ce client</button>`:""}
+    </div>
+  `;
+  openSheet("detail");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DÉPÔTS IT
+// ──────────────────────────────────────────────────────────────────
+function filterDepot(status, btn){
+  depotFilter=status;
+  document.querySelectorAll("#depot-chips .chip").forEach(c=>c.classList.remove("active"));
+  btn.classList.add("active");
+  renderDepotMobile();
+}
+
+function renderDepotMobile(){
+  let rows=contrats.filter(c=>requiresVisaIT(c.type)&&c.statut==="Actif");
+  if(depotFilter==="none") rows=rows.filter(c=>!c.visaDepot);
+  else if(depotFilter) rows=rows.filter(c=>c.visaDepot&&(c.visaStatut||"pending")===depotFilter);
+  rows.sort((a,b)=>(b.visaDepot||"").localeCompare(a.visaDepot||""));
+
+  // Update badge
+  const nbOverdue=rows.filter(c=>(!c.visaStatut||c.visaStatut==="pending")&&c.visaDepot&&joursDepuis(c.visaDepot)>30).length;
+  const nbNone=contrats.filter(c=>requiresVisaIT(c.type)&&c.statut==="Actif"&&!c.visaDepot).length;
+  const nb=nbOverdue+nbNone;
+  const nbEl=document.getElementById("nb-depot");
+  nbEl.textContent=nb; nbEl.style.display=nb?"inline":"none";
+
+  const el=document.getElementById("depot-list");
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="e-ico">🏛️</div><p>Aucun contrat trouvé</p></div>`; return;
+  }
+  el.innerHTML=rows.map(c=>{
+    const jd=c.visaDepot?joursDepuis(c.visaDepot):null;
+    const isOverdue=jd!==null&&jd>30&&(!c.visaStatut||c.visaStatut==="pending");
+    const statusKey=!c.visaDepot?"none":(c.visaStatut||"pending");
+    const statusMap={none:["⬜ Non déposé","s-none","not-deposited"],pending:["⏳ En attente","s-pending","pending"],ok:["✅ Visé","s-ok","ok"],refused:["❌ Refusé","s-refused","refused"]};
+    const [statusLbl,statusCls,cardCls]=statusMap[statusKey]||statusMap.pending;
+    return `<div class="depot-card ${cardCls}" onclick="openDepotSheet(${c.id})">
+      <div class="depot-head">
+        <div class="depot-info">
+          <div class="emp-name">${c.prenom} ${c.nom}</div>
+          <div class="emp-sub">${c.poste} · ${clientName(c.clientId)} · ${typeBadge(c.type)}</div>
+          ${c.visaRef?`<div style="font-size:11px;color:var(--accent);font-family:JetBrains Mono,monospace;margin-top:4px">${c.visaRef}</div>`:""}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="depot-status ${statusCls}">${statusLbl}</div>
+          ${c.visaDepot?`<div style="font-size:11px;color:var(--muted);margin-top:4px">${fmtDShort(c.visaDepot)}</div>`:""}
+          ${isOverdue?`<div style="font-size:10px;color:var(--red);font-weight:700">+${jd}j ⚠️</div>`:""}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DETAIL SHEET
+// ──────────────────────────────────────────────────────────────────
+function openDetail(id){
+  const c=contrats.find(x=>x.id===id);
+  if(!c) return;
+  const col=avatarColor(c.nom);
+  const cli=client(c.clientId);
+  const jr=c.dateFin?joursRestants(c.dateFin):null;
+  const jrText=jr!==null?(jr>=0?`Fin dans ${jr}j`:`Expiré depuis ${Math.abs(jr)}j`):"";
+  const canRenew=c.statut==="Actif"&&c.type!=="CDI";
+
+  document.getElementById("detail-content").innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+      <div style="width:56px;height:56px;border-radius:16px;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:20px;font-weight:700;flex-shrink:0">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+      <div>
+        <div style="font-family:Fraunces,serif;font-size:20px;font-weight:700">${c.civilite||""} ${c.prenom} ${c.nom}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">${c.poste} · ${cli.nom||"—"}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${typeBadge(c.type)} ${statusBadge(c.statut)}</div>
+      </div>
+    </div>
+
+    <div style="background:var(--s2);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div class="d-row"><span class="d-lbl">Début</span><span class="d-val">${fmtD(c.dateDebut)}</span></div>
+      <div class="d-row"><span class="d-lbl">Fin</span><span class="d-val" style="color:${jr!==null&&jr<=30?"var(--red)":jr!==null&&jr<=60?"var(--orange)":"var(--text)"}">${c.dateFin?fmtD(c.dateFin):"Indéterminée"}</span></div>
+      ${jrText?`<div class="d-row"><span class="d-lbl">Échéance</span><span class="d-val" style="font-weight:700;color:${jr!==null&&jr<=30?"var(--red)":"var(--orange)"}">${jrText}</span></div>`:""}
+      <div class="d-row"><span class="d-lbl">Renouvellements</span><span class="d-val">${c.renouvellements} ${isFamilyExhausted(c)?"🚫":""}</span></div>
+      <div class="d-row"><span class="d-lbl">Salaire</span><span class="d-val" style="font-family:JetBrains Mono,monospace">${fmt(c.salaire)}</span></div>
+      <div class="d-row"><span class="d-lbl">Ancienneté</span><span class="d-val">${anciennete(c.dateDebut)}</span></div>
+    </div>
+
+    <div style="background:var(--s2);border-radius:14px;padding:16px;margin-bottom:20px;">
+      <div class="d-row"><span class="d-lbl">Nationalité</span><span class="d-val">${c.nationalite||"—"}</span></div>
+      <div class="d-row"><span class="d-lbl">Pièce</span><span class="d-val">${c.pieceType||"—"} ${c.pieceNum||""}</span></div>
+      <div class="d-row"><span class="d-lbl">Visa IT</span><span class="d-val">${c.visaStatut==="ok"?"✅ Visé":c.visaStatut==="pending"?"⏳ En attente":c.visaStatut==="refused"?"❌ Refusé":"⬜ Non soumis"}</span></div>
+      <div class="d-row"><span class="d-lbl">Signature</span><span class="d-val">${c.sigStatut==="signed"?"✅ Signé":c.sigStatut==="sent"?"📤 En attente":"⬜ Non envoyé"}</span></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${canRenew?`<button onclick="closeSheet('detail');openRenouvSheet(${c.id})" style="background:rgba(0,195,122,0.15);border:1.5px solid rgba(0,195,122,0.3);color:var(--green);padding:14px;border-radius:14px;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">🔄 ${isFamilyExhausted(c)?"Passage en CDI":"Renouveler le contrat"}</button>`:""}
+      ${c.statut==="Actif"?`<button onclick="closeSheet('detail');openContratSheet(${c.id})" style="background:rgba(61,127,255,0.12);border:1.5px solid rgba(61,127,255,0.25);color:var(--accent);padding:14px;border-radius:14px;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">✏️ Modifier le contrat</button>`:""}
+      ${requiresVisaIT(c.type)?`<button onclick="closeSheet('detail');openDepotSheet(${c.id})" style="background:rgba(61,127,255,0.08);border:1.5px solid rgba(61,127,255,0.15);color:var(--accent);padding:14px;border-radius:14px;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">🏛️ Mise à jour dépôt IT</button>`:""}
+      ${currentUser?.role==="admin"?`<button onclick="deleteContratMobile(${c.id})" style="background:rgba(255,69,96,0.08);border:1.5px solid rgba(255,69,96,0.2);color:var(--red);padding:14px;border-radius:14px;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">🗑️ Supprimer ce contrat</button>`:""}
+    </div>
+  `;
+  openSheet("detail");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// CONTRAT SHEET (créer / modifier)
+// ──────────────────────────────────────────────────────────────────
+let editingContratId=null;
+
+function openContratSheet(id){
+  editingContratId=id||null;
+  const c=id?contrats.find(x=>x.id===id):null;
+  document.getElementById("contrat-sheet-title").textContent=c?"✏️ Modifier le contrat":"＋ Nouveau contrat";
+
+  const cliOptions=CLIENTS.map(cl=>`<option value="${cl.id}" ${c&&c.clientId===cl.id?"selected":""}>${cl.nom}</option>`).join("");
+  const typeOptions=["CDI","EXPATRIE","CDD 1","CDD 2","ESSAI 1","ESSAI 2","STAGE 1","STAGE 2"]
+    .map(t=>`<option value="${t}" ${c&&c.type===t?"selected":""}>${t}</option>`).join("");
+
+  document.getElementById("contrat-form").innerHTML=`
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Nom</label>
+        <input id="cf-nom" type="text" value="${c?.nom||""}" placeholder="DIALLO"/>
+      </div>
+      <div class="form-field">
+        <label>Prénom</label>
+        <input id="cf-prenom" type="text" value="${c?.prenom||""}" placeholder="Amadou"/>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Poste</label>
+      <input id="cf-poste" type="text" value="${c?.poste||""}" placeholder="Comptable"/>
+    </div>
+    <div class="form-field">
+      <label>Client</label>
+      <select id="cf-client"><option value="">— Sélectionner —</option>${cliOptions}</select>
+    </div>
+    <div class="form-field">
+      <label>Type de contrat</label>
+      <select id="cf-type">${typeOptions}</select>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Date début</label>
+        <input id="cf-debut" type="date" value="${c?.dateDebut||""}"/>
+      </div>
+      <div class="form-field">
+        <label>Date fin</label>
+        <input id="cf-fin" type="date" value="${c?.dateFin||""}"/>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Salaire (FCFA)</label>
+      <input id="cf-salaire" type="number" value="${c?.salaire||""}" placeholder="350000"/>
+    </div>
+    <div class="form-field">
+      <label>Nationalité</label>
+      <input id="cf-nat" type="text" value="${c?.nationalite||""}" placeholder="Sénégalaise"/>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;padding-bottom:8px;">
+      <button onclick="closeSheet('contrat')" style="flex:1;padding:14px;border-radius:14px;border:1.5px solid var(--border2);background:none;color:var(--soft);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">Annuler</button>
+      <button onclick="saveContratMobile()" style="flex:2;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">${c?"Enregistrer":"Créer"}</button>
+    </div>
+  `;
+  closeSheet("detail");
+  openSheet("contrat");
+}
+
+function saveContratMobile(){
+  const nom=document.getElementById("cf-nom").value.trim();
+  const prenom=document.getElementById("cf-prenom").value.trim();
+  const clientId=document.getElementById("cf-client").value;
+  const debut=document.getElementById("cf-debut").value;
+  if(!nom||!prenom||!clientId||!debut){showToast("Nom, prénom, client et date de début requis","red");return;}
+
+  if(editingContratId){
+    contrats=contrats.map(c=>{
+      if(c.id!==editingContratId) return c;
+      return {...c,nom,prenom,poste:document.getElementById("cf-poste").value.trim(),
+        clientId,type:document.getElementById("cf-type").value,
+        dateDebut:debut,dateFin:document.getElementById("cf-fin").value,
+        salaire:Number(document.getElementById("cf-salaire").value)||c.salaire,
+        nationalite:document.getElementById("cf-nat").value.trim()||c.nationalite};
+    });
+    showToast("✅ Contrat modifié","green");
+  } else {
+    const newC={
+      id:nextId++,nom,prenom,civilite:"",nationalite:document.getElementById("cf-nat").value.trim()||"Sénégalaise",
+      pieceType:"",pieceNum:"",adresse:"",poste:document.getElementById("cf-poste").value.trim(),
+      categorie:"",statutSal:"Employé",matrimonial:"",nbEpoux:0,nbEnfants:0,
+      salaire:Number(document.getElementById("cf-salaire").value)||0,
+      clientId,type:document.getElementById("cf-type").value,
+      dateDebut:debut,dateFin:document.getElementById("cf-fin").value,
+      statut:"Actif",renouvellements:0,
+      visaStatut:"none",visaRef:"",visaDepot:"",visaDate:"",visaObs:"",visaRegion:"",visaMode:"",
+      sigStatut:"unsent",sigEnvoi:"",sigRetour:"",sigMode:"",sigObs:"",sigRelances:[],
+      salKey:`${nom.toLowerCase()}-${prenom.toLowerCase()}-${clientId}`,
+      historique:[],avenants:[],
+    };
+    contrats.push(newC);
+    showToast("✅ Contrat créé","green");
+  }
+  saveLocal();
+  closeSheet("contrat");
+  renderAll();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DÉPÔT IT SHEET
+// ──────────────────────────────────────────────────────────────────
+let depotEditingId=null;
+
+function openDepotSheet(id){
+  depotEditingId=id;
+  const c=contrats.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById("depot-form-content").innerHTML=`
+    <div style="padding:12px 14px;border-radius:12px;background:var(--s2);margin-bottom:20px;font-size:13px;">
+      <strong>${c.prenom} ${c.nom}</strong> · ${clientName(c.clientId)} · ${typeBadge(c.type)}
+    </div>
+    <div class="form-field">
+      <label>Référence récépissé</label>
+      <input id="dit-ref" type="text" value="${c.visaRef||""}" placeholder="IT-2026-0041"/>
+    </div>
+    <div class="form-field">
+      <label>Inspection régionale</label>
+      <select id="dit-region">
+        <option value="">— Sélectionner —</option>
+        ${["Dakar","Thiès","Diourbel","Kaolack","Ziguinchor","Saint-Louis","Tambacounda","Matam","Fatick","Kolda","Sédhiou","Kédougou","Kaffrine","Louga"]
+          .map(r=>`<option ${(c.visaRegion||"")===r?"selected":""}>${r}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Date de dépôt</label>
+        <input id="dit-depot" type="date" value="${c.visaDepot||""}"/>
+      </div>
+      <div class="form-field">
+        <label>Mode de dépôt</label>
+        <select id="dit-mode">
+          <option value="">—</option>
+          <option value="physique" ${(c.visaMode||"")==="physique"?"selected":""}>🚶 Physique</option>
+          <option value="teledac" ${(c.visaMode||"")==="teledac"?"selected":""}>💻 TELEDAC</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Statut du visa</label>
+      <select id="dit-statut">
+        <option value="none" ${(!c.visaStatut||c.visaStatut==="none")?"selected":""}>⬜ Non soumis</option>
+        <option value="pending" ${c.visaStatut==="pending"?"selected":""}>⏳ En attente</option>
+        <option value="ok" ${c.visaStatut==="ok"?"selected":""}>✅ Visé</option>
+        <option value="refused" ${c.visaStatut==="refused"?"selected":""}>❌ Refusé</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>Observations</label>
+      <input id="dit-obs" type="text" value="${c.visaObs||""}" placeholder="Observations…"/>
+    </div>
+    <div style="display:flex;gap:12px;padding-bottom:8px;">
+      <button onclick="closeSheet('depot')" style="flex:1;padding:14px;border-radius:14px;border:1.5px solid var(--border2);background:none;color:var(--soft);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">Annuler</button>
+      <button onclick="saveDepotMobile()" style="flex:2;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">Enregistrer</button>
+    </div>
+  `;
+  openSheet("depot");
+}
+
+function saveDepotMobile(){
+  if(!depotEditingId) return;
+  const depot=document.getElementById("dit-depot").value;
+  if(!depot){showToast("La date de dépôt est obligatoire","red");return;}
+  contrats=contrats.map(c=>{
+    if(c.id!==depotEditingId) return c;
+    return {...c,
+      visaRef:document.getElementById("dit-ref").value.trim(),
+      visaRegion:document.getElementById("dit-region").value,
+      visaDepot:depot,
+      visaMode:document.getElementById("dit-mode").value,
+      visaStatut:document.getElementById("dit-statut").value,
+      visaObs:document.getElementById("dit-obs").value.trim(),
+    };
+  });
+  saveLocal();
+  closeSheet("depot");
+  renderAll();
+  showToast("✅ Dépôt IT mis à jour","green");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// RENOUVELLEMENT SHEET
+// ──────────────────────────────────────────────────────────────────
+let renouvId=null;
+
+function openRenouvSheet(id){
+  renouvId=id;
+  const c=contrats.find(x=>x.id===id);
+  if(!c) return;
+  const next=nextContractType(c);
+  const exhausted=isFamilyExhausted(c);
+  if(exhausted){
+    const jours=familyDureeJours(c);
+    const info=/^CDD/i.test(c.type)?`CDD arrivé à terme (${Math.round(jours/30)}m/24m max)`:/^ESSAI/i.test(c.type)?`Essai terminé (${jours}j/183j max)`:`Stage max atteint`;
+    showToast("ℹ️ "+info,"green");
+  }
+
+  // Build type options based on exhaustion
+  const typeOpts=exhausted
+    ?[{v:"CDI",l:"CDI"},{v:"EXPATRIE",l:"EXPATRIE"}]
+    :[
+      {v:next,l:next+" (suggéré)"},
+      ...["CDI","EXPATRIE","CDD 1","CDD 2","ESSAI 1","ESSAI 2","STAGE 1","STAGE 2"]
+        .filter(t=>t!==next).map(t=>({v:t,l:t}))
+    ];
+
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById("detail-content").innerHTML=`
+    <div class="sheet-title">🔄 ${exhausted?"Passage en CDI":"Renouvellement"}</div>
+    <div style="padding:12px 14px;border-radius:12px;background:var(--s2);margin-bottom:20px;font-size:13px;">
+      Contrat actuel : ${typeBadge(c.type)} → <strong>${next}</strong>
+    </div>
+    <div class="form-field">
+      <label>Type du nouveau contrat</label>
+      <select id="rv-type">${typeOpts.map(o=>`<option value="${o.v}">${o.l}</option>`).join("")}</select>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Date de début</label>
+        <input id="rv-debut" type="date" value="${c.dateFin||today}"/>
+      </div>
+      <div class="form-field">
+        <label>Date de fin</label>
+        <input id="rv-fin" type="date"/>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Nouveau salaire (laisser vide si inchangé)</label>
+      <input id="rv-sal" type="number" placeholder="${c.salaire}"/>
+    </div>
+    <div style="display:flex;gap:12px;padding-bottom:8px;">
+      <button onclick="closeSheet('detail')" style="flex:1;padding:14px;border-radius:14px;border:1.5px solid var(--border2);background:none;color:var(--soft);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">Annuler</button>
+      <button onclick="confirmRenouvMobile()" style="flex:2;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--green),#00a866);color:#fff;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">✅ Confirmer</button>
+    </div>
+  `;
+  openSheet("detail");
+}
+
+function confirmRenouvMobile(){
+  if(!renouvId) return;
+  const old=contrats.find(x=>x.id===renouvId);
+  if(!old) return;
+  const newDebut=document.getElementById("rv-debut").value;
+  if(!newDebut){showToast("Date de début obligatoire","red");return;}
+  const newType=document.getElementById("rv-type").value;
+  const newFin=document.getElementById("rv-fin").value;
+  const newSal=Number(document.getElementById("rv-sal").value)||old.salaire;
+  const sameFam=contractFamily(old.type)===contractFamily(newType);
+  const newRenouv=sameFam?old.renouvellements+1:0;
+
+  // Archive old
+  contrats=contrats.map(c=>{
+    if(c.id!==renouvId) return c;
+    return {...c,statut:"Expiré",dateFin:c.dateFin||newDebut};
+  });
+  // Create new
+  contrats.push({
+    ...old,id:nextId++,type:newType,dateDebut:newDebut,dateFin:newFin||"",
+    statut:"Actif",salaire:newSal,renouvellements:newRenouv,
+    visaStatut:"none",visaRef:"",visaDepot:"",visaDate:"",visaObs:"",visaRegion:"",visaMode:"",
+    sigStatut:"unsent",sigEnvoi:"",sigRetour:"",sigMode:"",sigObs:"",sigRelances:[],
+    depart:undefined,historique:[...(old.historique||[])],
+  });
+  saveLocal();
+  closeSheet("detail");
+  renderAll();
+  showToast(`✅ Renouvelé — ${old.type} → ${newType}`,"green");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// CLIENTS — AJOUT / MODIFICATION
+// ──────────────────────────────────────────────────────────────────
+
+const CLIENT_COLORS = ["#3D7FFF","#6A4FFF","#00C37A","#F5A623","#FF4560","#00BCD4","#9B59B6","#E67E22"];
+const CLIENT_EMOJIS = ["🏢","🏗️","🛒","🌾","⚖️","💻","🏭","🏪","🍽️","🏥","🚗","✈️","🎓","💰"];
+
+function openAddClientSheet(){ openClientSheet(null); }
+
+function openClientSheet(id){
+  editingClientId = id || null;
+  const c = id ? CLIENTS.find(x=>x.id===id) : null;
+  document.getElementById("client-sheet-title").textContent = c ? "✏️ Modifier le client" : "🏢 Nouveau client";
+
+  const selectedColor = c?.couleur || "#3D7FFF";
+  const selectedEmoji = c?.emoji  || "🏢";
+
+  const colorGrid = CLIENT_COLORS.map(col=>
+    `<div onclick="selectClientColor('${col}')" id="cc-${col.replace('#','')}" style="width:32px;height:32px;border-radius:10px;background:${col};cursor:pointer;border:3px solid ${col===selectedColor?"#fff":"transparent"};transition:all .15s;flex-shrink:0;"></div>`
+  ).join("");
+
+  const emojiGrid = CLIENT_EMOJIS.map(em=>
+    `<div onclick="selectClientEmoji('${em}')" id="ce-${em}" style="width:40px;height:40px;border-radius:10px;background:${em===selectedEmoji?"var(--s3)":"none"};border:2px solid ${em===selectedEmoji?"var(--accent)":"transparent"};display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all .15s;">${em}</div>`
+  ).join("");
+
+  document.getElementById("client-form-content").innerHTML=`
+    <input type="hidden" id="cc-selected" value="${selectedColor}"/>
+    <input type="hidden" id="ce-selected" value="${selectedEmoji}"/>
+    <div class="form-field">
+      <label>Nom de l'entreprise</label>
+      <input id="cl-nom" type="text" value="${c?.nom||""}" placeholder="Ex : SOCELEC SARL"/>
+    </div>
+    <div class="form-field">
+      <label>Secteur d'activité</label>
+      <input id="cl-secteur" type="text" value="${c?.secteur||""}" placeholder="Ex : BTP, Commerce…"/>
+    </div>
+    <div class="form-field">
+      <label>Contact principal</label>
+      <input id="cl-contact" type="text" value="${c?.contact||""}" placeholder="Nom du responsable"/>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Téléphone</label>
+        <input id="cl-tel" type="tel" value="${c?.telephone||""}" placeholder="+221 77…"/>
+      </div>
+      <div class="form-field">
+        <label>Email</label>
+        <input id="cl-email" type="email" value="${c?.email||""}" placeholder="contact@…"/>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Adresse</label>
+      <input id="cl-adresse" type="text" value="${c?.adresse||""}" placeholder="Dakar, Sénégal"/>
+    </div>
+    <div class="form-field">
+      <label>Couleur</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;" id="cc-grid">${colorGrid}</div>
+    </div>
+    <div class="form-field">
+      <label>Icône</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;" id="ce-grid">${emojiGrid}</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;padding-bottom:8px;">
+      <button onclick="closeSheet('client')" style="flex:1;padding:14px;border-radius:14px;border:1.5px solid var(--border2);background:none;color:var(--soft);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">Annuler</button>
+      <button onclick="saveClientMobile()" style="flex:2;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:15px;font-weight:700;font-family:Outfit,sans-serif;cursor:pointer;">${c?"Enregistrer":"Créer le client"}</button>
+    </div>
+  `;
+  openSheet("client");
+}
+
+function selectClientColor(col){
+  document.getElementById("cc-selected").value = col;
+  CLIENT_COLORS.forEach(c=>{
+    const el=document.getElementById("cc-"+c.replace("#",""));
+    if(el) el.style.border = `3px solid ${c===col?"#fff":"transparent"}`;
+  });
+}
+
+function selectClientEmoji(em){
+  document.getElementById("ce-selected").value = em;
+  CLIENT_EMOJIS.forEach(e=>{
+    const el=document.getElementById("ce-"+e);
+    if(el){
+      el.style.background = e===em?"var(--s3)":"none";
+      el.style.border = `2px solid ${e===em?"var(--accent)":"transparent"}`;
+    }
+  });
+}
+
+function saveClientMobile(){
+  const nom = document.getElementById("cl-nom").value.trim();
+  if(!nom){ showToast("Le nom du client est obligatoire","red"); return; }
+
+  if(editingClientId){
+    CLIENTS = CLIENTS.map(c=>{
+      if(c.id!==editingClientId) return c;
+      return {
+        ...c,
+        nom,
+        secteur:   document.getElementById("cl-secteur").value.trim(),
+        contact:   document.getElementById("cl-contact").value.trim(),
+        telephone: document.getElementById("cl-tel").value.trim(),
+        email:     document.getElementById("cl-email").value.trim(),
+        adresse:   document.getElementById("cl-adresse").value.trim(),
+        couleur:   document.getElementById("cc-selected").value,
+        emoji:     document.getElementById("ce-selected").value,
+      };
+    });
+    showToast("✅ Client modifié","green");
+  } else {
+    const newId = "c" + nextClientId++;
+    CLIENTS.push({
+      id: newId,
+      nom,
+      secteur:   document.getElementById("cl-secteur").value.trim(),
+      contact:   document.getElementById("cl-contact").value.trim(),
+      telephone: document.getElementById("cl-tel").value.trim(),
+      email:     document.getElementById("cl-email").value.trim(),
+      adresse:   document.getElementById("cl-adresse").value.trim(),
+      couleur:   document.getElementById("cc-selected").value,
+      emoji:     document.getElementById("ce-selected").value,
+    });
+    showToast("✅ Client créé","green");
+  }
+  saveLocal();
+  closeSheet("client");
+  renderAll();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SUPPRESSIONS
+// ──────────────────────────────────────────────────────────────────
+function deleteContratMobile(id){
+  const c = contrats.find(x=>x.id===id);
+  if(!c) return;
+  if(!confirm(`Supprimer le contrat de ${c.prenom} ${c.nom} ?
+
+Cette action est irréversible.`)) return;
+  contrats = contrats.filter(x=>x.id!==id);
+  saveLocal();
+  closeSheet("detail");
+  renderAll();
+  showToast("🗑️ Contrat supprimé","red");
+}
+
+function deleteClientMobile(id){
+  const c = CLIENTS.find(x=>x.id===id);
+  if(!c) return;
+  const nbContrats = contrats.filter(x=>x.clientId===id).length;
+  if(nbContrats>0){
+    showToast(`Impossible — ${nbContrats} contrat${nbContrats>1?"s":""} lié${nbContrats>1?"s":""}. Supprimez d'abord les contrats.`,"red");
+    return;
+  }
+  if(!confirm(`Supprimer le client "${c.nom}" ?
+
+Cette action est irréversible.`)) return;
+  CLIENTS = CLIENTS.filter(x=>x.id!==id);
+  saveLocal();
+  closeSheet("detail");
+  renderAll();
+  showToast("🗑️ Client supprimé","red");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SHEET HELPERS
+// ──────────────────────────────────────────────────────────────────
+function openSheet(name){
+  document.getElementById(name+"-overlay").classList.add("open");
+  document.getElementById(name+"-sheet").classList.add("open");
+}
+function closeSheet(name){
+  document.getElementById(name+"-overlay").classList.remove("open");
+  document.getElementById(name+"-sheet").classList.remove("open");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// RENDER ALL
+// ──────────────────────────────────────────────────────────────────
+function renderAll(){
+  renderDashboard();
+  if(currentPage==="alertes") renderAlertesMobile();
+  if(currentPage==="employes") renderEmployesMobile("");
+  if(currentPage==="clients") renderClientsMobile("");
+  if(currentPage==="depotit")    renderDepotMobile();
+  if(currentPage==="historique") renderHistoriqueMobile("");
+  if(currentPage==="signatures") renderSignaturesMobile();
+  if(currentPage==="departs")    renderDepartsMobile("");
+  if(currentPage==="avenants")   renderAvenantsMobile("");
+  if(currentPage==="damt")       renderDAMTMobile();
+  if(currentPage==="etat1024")   renderEtat1024Mobile();
+}
+
+
+// ──────────────────────────────────────────────────────────────────
+// HISTORIQUE
+// ──────────────────────────────────────────────────────────────────
+function renderHistoriqueMobile(q){
+  q=(q||"").toLowerCase();
+  // Grouper par salarié (salKey ou nom+prenom+client)
+  const map={};
+  contrats.forEach(c=>{
+    const key=c.salKey||(c.nom+c.prenom+c.clientId);
+    if(!map[key]) map[key]={nom:c.nom,prenom:c.prenom,civilite:c.civilite||"",clientId:c.clientId,contrats:[]};
+    map[key].contrats.push(c);
+  });
+  let salaries=Object.values(map).filter(s=>{
+    const name=`${s.prenom} ${s.nom}`.toLowerCase();
+    return !q||name.includes(q)||clientName(s.clientId).toLowerCase().includes(q);
+  }).sort((a,b)=>a.nom.localeCompare(b.nom));
+
+  const el=document.getElementById("hist-list");
+  if(!salaries.length){el.innerHTML=`<div class="empty"><div class="e-ico">📜</div><p>Aucun historique</p></div>`;return;}
+
+  el.innerHTML=salaries.map(s=>{
+    const col=avatarColor(s.nom);
+    const actif=s.contrats.find(c=>c.statut==="Actif");
+    const total=s.contrats.length;
+    return `<div class="emp-card" onclick="openHistDetail('${s.nom}','${s.prenom}','${s.clientId}')">
+      <div class="emp-avatar" style="background:${col}22;color:${col}">${(s.prenom[0]||"")+(s.nom[0]||"")}</div>
+      <div class="emp-info">
+        <div class="emp-name">${s.prenom} ${s.nom}</div>
+        <div class="emp-sub">${clientName(s.clientId)}</div>
+      </div>
+      <div class="emp-right">
+        ${actif?typeBadge(actif.type):`<span class="badge b-expire">Inactif</span>`}
+        <span style="font-size:10px;color:var(--muted)">${total} contrat${total>1?"s":""}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openHistDetail(nom,prenom,clientId){
+  const empContrats=contrats.filter(c=>c.nom===nom&&c.prenom===prenom&&c.clientId===clientId)
+    .sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut));
+  const col=avatarColor(nom);
+  document.getElementById("detail-content").innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <div style="width:48px;height:48px;border-radius:14px;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:18px;font-weight:700">${(prenom[0]||"")+(nom[0]||"")}</div>
+      <div><div style="font-family:Fraunces,serif;font-size:18px;font-weight:700">${prenom} ${nom}</div><div style="font-size:12px;color:var(--muted)">${clientName(clientId)}</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+      ${empContrats.map((c,i)=>{
+        const isLast=i===empContrats.length-1;
+        const isActif=c.statut==="Actif";
+        return `<div style="display:flex;gap:12px;padding:10px 0;">
+          <div style="display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0;">
+            <div style="width:12px;height:12px;border-radius:50%;background:${isActif?"var(--green)":c.statut==="Résilié"?"var(--red)":"var(--muted)"};flex-shrink:0;margin-top:4px;"></div>
+            ${!isLast?`<div style="width:2px;flex:1;background:var(--border);margin-top:4px;margin-bottom:-4px;"></div>`:""}
+          </div>
+          <div style="flex:1;background:var(--s2);border-radius:12px;padding:12px;margin-bottom:${isLast?0:8}px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              ${typeBadge(c.type)}
+              <span style="font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace;">${fmtDShort(c.dateDebut)}${c.dateFin?" → "+fmtDShort(c.dateFin):""}</span>
+            </div>
+            <div style="font-size:12px;color:var(--soft)">${c.poste}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${fmt(c.salaire)}</div>
+            ${c.renouvellements>0?`<div style="font-size:10px;color:var(--orange);margin-top:4px">Renouvellement ${c.renouvellements}</div>`:""}
+            ${(c.historique||[]).flatMap(h=>(h.evenements||[])).map(ev=>`<div style="font-size:10px;color:var(--muted);margin-top:4px">• ${ev.type==="salaire"?"💰 "+fmt(ev.nouveauSalaire):ev.type==="poste"?"📌 "+ev.nouveauPoste:ev.type} — ${fmtDShort(ev.date)}</div>`).join("")}
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+  openSheet("detail");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SIGNATURES
+// ──────────────────────────────────────────────────────────────────
+let sigFilter="";
+function filterSig(status,btn){
+  sigFilter=status;
+  document.querySelectorAll("#sig-chips .chip").forEach(c=>c.classList.remove("active"));
+  btn.classList.add("active");
+  renderSignaturesMobile();
+}
+
+function renderSignaturesMobile(){
+  const SIG={unsent:{ico:"⬜",lbl:"Non envoyé",col:"var(--muted)"},sent:{ico:"📤",lbl:"En attente",col:"var(--orange)"},signed:{ico:"✅",lbl:"Signé",col:"var(--green)"},refused:{ico:"❌",lbl:"Refusé",col:"var(--red)"}};
+  // Uniquement les contrats ACTIFS dont la signature n'est PAS encore finalisée
+  let rows=contrats.filter(c=>c.statut==="Actif" && (c.sigStatut||"unsent")!=="signed");
+  if(sigFilter) rows=rows.filter(c=>(c.sigStatut||"unsent")===sigFilter);
+  rows.sort((a,b)=>(b.sigEnvoi||"").localeCompare(a.sigEnvoi||""));
+  const el=document.getElementById("sig-list");
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="e-ico">✍️</div><p>Aucune signature trouvée</p></div>`;return;}
+  el.innerHTML=rows.map(c=>{
+    const sig=SIG[c.sigStatut||"unsent"];
+    const jd=c.sigEnvoi?joursDepuis(c.sigEnvoi):null;
+    return `<div class="emp-card ${c.sigStatut==="refused"?"urgent":jd!==null&&jd>7&&c.sigStatut==="sent"?"warn":""}" onclick="openDetail(${c.id})">
+      <div class="emp-avatar" style="background:${avatarColor(c.nom)}22;color:${avatarColor(c.nom)}">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+      <div class="emp-info">
+        <div class="emp-name">${c.prenom} ${c.nom}</div>
+        <div class="emp-sub">${c.poste} · ${clientName(c.clientId)}</div>
+        ${c.sigEnvoi?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Envoyé le ${fmtDShort(c.sigEnvoi)}${jd!==null?` (${jd}j)`:""}</div>`:""}
+      </div>
+      <div class="emp-right">
+        ${typeBadge(c.type)}
+        <span style="font-size:11px;color:${sig.col};font-weight:600">${sig.ico} ${sig.lbl}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DÉPARTS
+// ──────────────────────────────────────────────────────────────────
+const MOTIFS_LABELS={demission:"Démission",fin:"Fin de contrat",licenciement:"Licenciement",retraite:"Retraite",deces:"Décès",rupture:"Rupture conventionnelle",abandon:"Abandon de poste"};
+const MOTIFS_ICONS={demission:"🚶",fin:"📅",licenciement:"⚠️",retraite:"🏖️",deces:"🕊️",rupture:"🤝",abandon:"🏃"};
+
+function renderDepartsMobile(q){
+  q=(q||"").toLowerCase();
+  let rows=contrats.filter(c=>(c.statut==="Expiré"||c.statut==="Résilié")&&c.depart)
+    .filter(c=>`${c.nom} ${c.prenom}`.toLowerCase().includes(q)||clientName(c.clientId).toLowerCase().includes(q))
+    .sort((a,b)=>(b.depart?.date||"").localeCompare(a.depart?.date||""));
+  const el=document.getElementById("dep-list");
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="e-ico">🚪</div><p>Aucun départ enregistré</p></div>`;return;}
+
+  // Stats rapides
+  const total=rows.length;
+  const complets=rows.filter(c=>{
+    const rel=DOCS_SORTIE.filter(d=>!d.conditional||docVisible(d,c.depart?.motif||"fin",c.type));
+    return rel.every(d=>c.depart?.docs?.[d.key]?.done);
+  }).length;
+
+  el.innerHTML=`
+    <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
+      <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="ico">🚪</div><div class="val" style="color:var(--accent)">${total}</div><div class="lbl">Départs</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--green)"><div class="ico">✅</div><div class="val" style="color:var(--green)">${complets}</div><div class="lbl">Dossiers complets</div></div>
+    </div>
+    ${rows.map(c=>{
+      const dep=c.depart||{};
+      const rel=DOCS_SORTIE.filter(d=>!d.conditional||docVisible(d,dep.motif||"fin",c.type));
+      const doneCount=rel.filter(d=>dep.docs?.[d.key]?.done).length;
+      const pct=Math.round((doneCount/rel.length)*100);
+      const col=avatarColor(c.nom);
+      const motifIco=MOTIFS_ICONS[dep.motif||"fin"]||"🚪";
+      return `<div class="emp-card" onclick="openDepartDetail(${c.id})">
+        <div class="emp-avatar" style="background:${col}22;color:${col}">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+        <div class="emp-info">
+          <div class="emp-name">${c.prenom} ${c.nom}</div>
+          <div class="emp-sub">${c.poste} · ${clientName(c.clientId)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${motifIco} ${MOTIFS_LABELS[dep.motif||"fin"]||dep.motif} · ${dep.date?fmtDShort(dep.date):"—"}</div>
+        </div>
+        <div class="emp-right">
+          ${typeBadge(c.type)}
+          <div style="font-size:10px;margin-top:4px;color:${pct===100?"var(--green)":"var(--orange)"}">Docs: ${doneCount}/${rel.length}</div>
+          <div style="width:48px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:3px;">
+            <div style="width:${pct}%;height:100%;background:${pct===100?"var(--green)":"var(--orange)"};"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join("")}`;
+}
+
+function openDepartDetail(id){
+  const c=contrats.find(x=>x.id===id);
+  if(!c||!c.depart) return;
+  const dep=c.depart;
+  const col=avatarColor(c.nom);
+  const rel=DOCS_SORTIE.filter(d=>!d.conditional||docVisible(d,dep.motif||"fin",c.type));
+  document.getElementById("detail-content").innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="width:48px;height:48px;border-radius:14px;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:18px;font-weight:700">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+      <div><div style="font-family:Fraunces,serif;font-size:18px;font-weight:700">${c.prenom} ${c.nom}</div><div style="font-size:12px;color:var(--muted)">${c.poste} · ${clientName(c.clientId)}</div></div>
+    </div>
+    <div style="background:var(--s2);border-radius:14px;padding:14px;margin-bottom:16px;">
+      <div class="d-row"><span class="d-lbl">Motif</span><span class="d-val">${MOTIFS_ICONS[dep.motif||"fin"]} ${MOTIFS_LABELS[dep.motif||"fin"]||dep.motif}</span></div>
+      <div class="d-row"><span class="d-lbl">Date de départ</span><span class="d-val">${fmtD(dep.date)}</span></div>
+      ${dep.obs?`<div class="d-row"><span class="d-lbl">Observations</span><span class="d-val" style="font-size:12px">${dep.obs}</span></div>`:""}
+    </div>
+    <div class="section-title" style="margin-top:0">Documents de sortie</div>
+    ${rel.map(doc=>{
+      const remise=dep.docs?.[doc.key]?.remise||{};
+      const it=dep.docs?.[doc.key]?.it||{};
+      const done=dep.docs?.[doc.key]?.done;
+      return `<div style="background:var(--s2);border-radius:12px;padding:12px;margin-bottom:8px;border-left:3px solid ${done?"var(--green)":"var(--border)"}">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">${doc.lbl} ${done?"✅":"⏳"}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;color:var(--muted);">
+          <div><div style="font-weight:700;color:var(--green);margin-bottom:2px">Remise salarié</div>${remise.date?fmtDShort(remise.date):"Non remis"}<br/>${remise.decharge==="oui"?"Décharge ✅":"Décharge ⬜"}</div>
+          ${doc.itRequired!==false?`<div><div style="font-weight:700;color:var(--accent);margin-bottom:2px">Dépôt IT</div>${it.depot?fmtDShort(it.depot):"Non déposé"}<br/>${it.statut==="ok"?"Visé ✅":it.statut==="pending"?"En attente ⏳":"Non soumis ⬜"}</div>`:`<div><div style="font-weight:700;color:var(--muted);margin-bottom:2px">Dépôt IT</div><em>Non requis</em></div>`}
+        </div>
+      </div>`;
+    }).join("")}
+  `;
+  openSheet("detail");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// AVENANTS
+// ──────────────────────────────────────────────────────────────────
+function renderAvenantsMobile(q){
+  q=(q||"").toLowerCase();
+  const rows=[];
+  contrats.forEach(c=>{
+    (c.avenants||[]).forEach((av,i)=>{
+      if(!q||`${c.prenom} ${c.nom} ${av.ref||""}`.toLowerCase().includes(q))
+        rows.push({c,av,i});
+    });
+  });
+  rows.sort((a,b)=>(b.av.date||"").localeCompare(a.av.date||""));
+  const el=document.getElementById("av-list");
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="e-ico">📝</div><p>Aucun avenant</p></div>`;return;}
+  el.innerHTML=rows.map(({c,av})=>{
+    const col=avatarColor(c.nom);
+    const changes=[];
+    if(av.sections?.salaire&&av.sections.salaire.ancienSalaire) changes.push("💰 Salaire");
+    if(av.sections?.poste&&av.sections.poste.nouveauPoste) changes.push("📌 Poste");
+    if(av.sections?.avantages) changes.push("🎁 Avantages");
+    if(av.sections?.horaire) changes.push("⏰ Horaire");
+    if(av.sections?.lieu) changes.push("📍 Lieu");
+    if(av.sections?.duree) changes.push("📅 Durée");
+    return `<div class="emp-card">
+      <div class="emp-avatar" style="background:${col}22;color:${col}">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+      <div class="emp-info">
+        <div class="emp-name">${av.ref||"Avenant"}</div>
+        <div class="emp-sub">${c.prenom} ${c.nom} · ${clientName(c.clientId)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${changes.join(" · ")||"—"}</div>
+      </div>
+      <div class="emp-right">
+        <span style="font-size:11px;color:var(--muted);font-family:JetBrains Mono,monospace">${av.date?fmtDShort(av.date):"—"}</span>
+        <span style="font-size:11px;color:${av.visaStatut==="ok"?"var(--green)":av.visaStatut==="pending"?"var(--orange)":"var(--muted)"}">${av.visaStatut==="ok"?"✅ Visé":av.visaStatut==="pending"?"⏳ IT":"⬜ IT"}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DAMT
+// ──────────────────────────────────────────────────────────────────
+function damtMobileYear(d){damtYear+=d;renderDAMTMobile();}
+
+function renderDAMTMobile(){
+  document.getElementById("damt-year-m").textContent=damtYear;
+  const ys=new Date(damtYear,0,1), ye=new Date(damtYear,11,31);
+
+  const entrees=contrats.filter(c=>c.dateDebut&&new Date(c.dateDebut)>=ys&&new Date(c.dateDebut)<=ye);
+  const sorties=contrats.filter(c=>c.dateFin&&new Date(c.dateFin)>=ys&&new Date(c.dateFin)<=ye&&c.statut!=="Actif");
+  const renouvs=contrats.filter(c=>c.renouvellements>0&&c.dateDebut&&new Date(c.dateDebut)>=ys&&new Date(c.dateDebut)<=ye);
+
+  document.getElementById("damt-stats-m").innerHTML=[
+    {ico:"↗️",val:entrees.length,lbl:"Entrées",col:"var(--green)"},
+    {ico:"↙️",val:sorties.length,lbl:"Sorties",col:"var(--red)"},
+    {ico:"🔄",val:renouvs.length,lbl:"Renouvellements",col:"var(--accent)"},
+    {ico:"👥",val:contrats.filter(c=>c.statut==="Actif").length,lbl:"Actifs au 31/12",col:"var(--soft)"},
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.col}"><div class="ico">${s.ico}</div><div class="val" style="color:${s.col}">${s.val}</div><div class="lbl">${s.lbl}</div></div>`).join("");
+
+  const all=[
+    ...entrees.map(c=>({...c,_mvt:"entree",_date:c.dateDebut})),
+    ...sorties.map(c=>({...c,_mvt:"sortie",_date:c.dateFin})),
+  ].sort((a,b)=>b._date.localeCompare(a._date));
+
+  const el=document.getElementById("damt-list-m");
+  if(!all.length){el.innerHTML=`<div class="empty"><div class="e-ico">📊</div><p>Aucun mouvement en ${damtYear}</p></div>`;return;}
+  el.innerHTML=all.map(c=>{
+    const col=avatarColor(c.nom);
+    const isEntree=c._mvt==="entree";
+    return `<div class="emp-card" onclick="openDetail(${c.id})">
+      <div class="emp-avatar" style="background:${col}22;color:${col}">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+      <div class="emp-info">
+        <div class="emp-name">${c.prenom} ${c.nom}</div>
+        <div class="emp-sub">${c.poste} · ${clientName(c.clientId)}</div>
+      </div>
+      <div class="emp-right">
+        ${typeBadge(c.type)}
+        <span style="font-size:11px;font-weight:700;color:${isEntree?"var(--green)":"var(--red)"}">${isEntree?"↗️ Entrée":"↙️ Sortie"}</span>
+        <span style="font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace">${fmtDShort(c._date)}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// ÉTAT 1024
+// ──────────────────────────────────────────────────────────────────
+function e1024MobileYear(d){e1024Year+=d;renderEtat1024Mobile();}
+function calcParts(nbEpoux,nbEnfants){
+  return Math.min(1+(Number(nbEpoux)||0)*0.5+(Number(nbEnfants)||0)*0.5,5).toFixed(1).replace(".0","");
+}
+function getSexe(civ){if(civ==="Mme"||civ==="Mlle")return "F";if(civ==="M.")return "M";return "—";}
+
+function renderEtat1024Mobile(){
+  document.getElementById("e1024-year-m").textContent=e1024Year;
+  const ys=new Date(e1024Year,0,1), ye=new Date(e1024Year,11,31);
+  const rows=contrats.filter(c=>{
+    if(!c.dateDebut) return false;
+    if(new Date(c.dateDebut)>ye) return false;
+    if(c.dateFin&&new Date(c.dateFin)<ys) return false;
+    return true;
+  }).sort((a,b)=>a.nom.localeCompare(b.nom));
+
+  const actifs=rows.filter(c=>!c.dateFin||new Date(c.dateFin)>ye);
+  const sortis=rows.filter(c=>c.dateFin&&new Date(c.dateFin)<=ye);
+
+  document.getElementById("e1024-stats-m").innerHTML=[
+    {ico:"👥",val:rows.length,lbl:"Total",col:"var(--accent)"},
+    {ico:"✅",val:actifs.length,lbl:"Présents fin d'année",col:"var(--green)"},
+    {ico:"🚪",val:sortis.length,lbl:"Sortis en cours",col:"var(--orange)"},
+    {ico:"👶",val:rows.reduce((s,c)=>s+(Number(c.nbEnfants)||0),0),lbl:"Enfants",col:"var(--teal)"},
+  ].map(s=>`<div class="stat-card" style="border-left:3px solid ${s.col}"><div class="ico">${s.ico}</div><div class="val" style="color:${s.col}">${s.val}</div><div class="lbl">${s.lbl}</div></div>`).join("");
+
+  function buildList(list,col){
+    if(!list.length) return `<div class="empty" style="padding:20px"><div class="e-ico">👤</div><p>Aucun salarié</p></div>`;
+    return list.map(c=>{
+      const parts=calcParts(c.nbEpoux,c.nbEnfants);
+      return `<div class="emp-card" onclick="openDetail(${c.id})">
+        <div class="emp-avatar" style="background:${avatarColor(c.nom)}22;color:${avatarColor(c.nom)};font-size:12px;width:38px;height:38px;border-radius:10px">${(c.prenom[0]||"")+(c.nom[0]||"")}</div>
+        <div class="emp-info">
+          <div class="emp-name" style="font-size:13px">${c.prenom} ${c.nom}</div>
+          <div class="emp-sub" style="font-size:11px">${clientName(c.clientId)} · ${getSexe(c.civilite)} · ${c.nationalite||"—"}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${c.matrimonial||"—"} · ${c.nbEnfants||0} enf. · ${parts} parts</div>
+        </div>
+        <div class="emp-right">
+          ${typeBadge(c.type)}
+          <span style="font-size:10px;color:${col};font-family:JetBrains Mono,monospace">${fmtDShort(c.dateDebut)}${c.dateFin?" → "+fmtDShort(c.dateFin):""}</span>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("e1024-actifs-m").innerHTML=buildList(actifs,"var(--green)");
+  document.getElementById("e1024-sortis-m").innerHTML=buildList(sortis,"var(--orange)");
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DASMO
+// ──────────────────────────────────────────────────────────────────
+function renderDasmoMobile(){
+  const actifs=contrats.filter(c=>c.statut==="Actif");
+  const sn=actifs.filter(c=>c.nationalite==="Sénégalaise"||!c.nationalite).length;
+  const et=actifs.filter(c=>c.nationalite&&c.nationalite!=="Sénégalaise").length;
+  const h=actifs.filter(c=>c.civilite==="M.").length;
+  const f=actifs.filter(c=>c.civilite==="Mme"||c.civilite==="Mlle").length;
+
+  document.getElementById("dasmo-content-m").innerHTML=`
+    <div class="stats-grid" style="margin-bottom:20px;">
+      <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="ico">👥</div><div class="val" style="color:var(--accent)">${actifs.length}</div><div class="lbl">Effectif total</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--green)"><div class="ico">🇸🇳</div><div class="val" style="color:var(--green)">${sn}</div><div class="lbl">Sénégalais</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--orange)"><div class="ico">🌍</div><div class="val" style="color:var(--orange)">${et}</div><div class="lbl">Étrangers</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--teal)"><div class="ico">👶</div><div class="val" style="color:var(--teal)">${actifs.reduce((s,c)=>s+(Number(c.nbEnfants)||0),0)}</div><div class="lbl">Enfants</div></div>
+    </div>
+    <div class="section-title" style="margin-top:0">Répartition H/F par type</div>
+    ${["CDI","EXPATRIE","CDD 1","CDD 2","ESSAI 1","ESSAI 2","STAGE 1","STAGE 2"].map(type=>{
+      const list=actifs.filter(c=>c.type===type);
+      if(!list.length) return "";
+      const hh=list.filter(c=>c.civilite==="M.").length;
+      const ff=list.filter(c=>c.civilite==="Mme"||c.civilite==="Mlle").length;
+      return `<div style="background:var(--s2);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <div>${typeBadge(type)}</div>
+        <div style="display:flex;gap:16px;font-size:13px;">
+          <span>👨 <strong>${hh}</strong></span>
+          <span>👩 <strong>${ff}</strong></span>
+          <span style="color:var(--muted)">= <strong>${list.length}</strong></span>
+        </div>
+      </div>`;
+    }).join("")}
+    <div class="section-title">Répartition par nationalité</div>
+    ${Object.entries(actifs.reduce((acc,c)=>{const n=c.nationalite||"Sénégalaise";acc[n]=(acc[n]||0)+1;return acc;},{}))
+      .sort((a,b)=>b[1]-a[1])
+      .map(([nat,nb])=>`<div style="background:var(--s2);border-radius:12px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px">${nat}</span>
+        <span style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;color:var(--accent)">${nb}</span>
+      </div>`).join("")}
+    <div style="height:20px"></div>
+  `;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// PWA MANIFEST
+// ──────────────────────────────────────────────────────────────────
+const manifest={
+  name:"AB PARTNERS RH",short_name:"AB Partners",
+  description:"Suivi des contrats RH — AB PARTNERS",
+  start_url:"./",display:"standalone",
+  background_color:"#060810",theme_color:"#060810",
+  icons:[{src:"data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'192\' height=\'192\' rx=\'40\' fill=\'%233D7FFF\'/><text x=\'50%\' y=\'55%\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'100\'> 🤝</text></svg>",sizes:"192x192",type:"image/svg+xml"}]
+};
+const blob=new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"});
+document.getElementById("manifest-link").href=URL.createObjectURL(blob);
+
+// ──────────────────────────────────────────────────────────────────
+// STARTUP
+// ──────────────────────────────────────────────────────────────────
+document.getElementById("fab-btn").style.display="none";
+initFirebase();
+
+// Version check
+try{
+  const v=localStorage.getItem("cf_mob_version");
+  if(v!=="1.0"){localStorage.removeItem("cf_pwds");localStorage.setItem("cf_mob_version","1.0");}
+}catch(e){}
+
+checkSession();
+</script>
+</body>
+</html>
